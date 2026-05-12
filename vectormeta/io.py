@@ -19,7 +19,7 @@ def read_records(path: Path) -> tuple[list[Record], InputFormat]:
     if not path.is_file():
         raise InvalidInputError(f"Input path is not a file: {path}")
 
-    text = path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8-sig")
     if not text.strip():
         raise InvalidInputError(f"Input file is empty: {path}")
 

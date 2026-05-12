@@ -1,0 +1,16 @@
+﻿{
+    "id":  "doc_123_chunk_4",
+    "values":  [
+                   0.1,
+                   0.2,
+                   0.3
+               ],
+    "metadata":  {
+                     "doc_id":  "doc_123",
+                     "chunk_id":  "chunk_4",
+                     "source":  "paper.pdf",
+                     "page":  12,
+                     "section":  "Intro",
+                     "content_ref":  "sidecar/doc_123_chunk_4.json"
+                 }
+}

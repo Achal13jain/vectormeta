@@ -1,0 +1,14 @@
+﻿target: pinecone
+limit_kb: 40
+move:
+  - chunk_text
+  - raw_html
+  - summary
+keep:
+  - doc_id
+  - chunk_id
+  - source
+  - page
+  - section
+content_ref_field: content_ref
+sidecar_dir: sidecar

@@ -30,7 +30,7 @@ def load_config(path: Path | None) -> VectorMetaConfig:
     if not path.exists():
         raise InvalidInputError(f"Config file does not exist: {path}")
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw = yaml.safe_load(path.read_text(encoding="utf-8-sig"))
     except yaml.YAMLError as exc:
         raise InvalidInputError(f"Invalid YAML config in {path}: {exc}") from exc
     if raw is None:
