@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -171,7 +171,7 @@ def _fix_record(
 def _move_until_under_limit(
     *,
     metadata: dict[str, Any],
-    move_field: Any,
+    move_field: Callable[[str], bool],
     limit_bytes: int,
     protected_fields: set[str],
 ) -> None:

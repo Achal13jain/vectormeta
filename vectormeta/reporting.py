@@ -93,7 +93,7 @@ def render_limits(console: Console) -> None:
         if target_limit.limit_bytes is None:
             limit = "custom"
         else:
-            limit = f"{target_limit.limit_bytes} B / {target_limit.limit_kb:.0f} KB"
+            limit = f"{target_limit.limit_bytes} B / {target_limit.limit_bytes / 1024:.0f} KB"
         table.add_row(target_limit.name, limit, target_limit.note)
     console.print(table)
     console.print(
