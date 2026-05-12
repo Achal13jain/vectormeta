@@ -77,4 +77,4 @@ packages = ["vectormeta"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra"
+addopts = "-ra -p no:langsmith_plugin"
