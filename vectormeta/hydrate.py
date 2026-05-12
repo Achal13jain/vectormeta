@@ -91,4 +91,6 @@ def _resolve_sidecar_path(
         if candidate.exists():
             return candidate
     checked = ", ".join(str(candidate) for candidate in candidates)
-    raise InvalidInputError(f"Could not resolve sidecar reference '{content_ref}'. Checked: {checked}")
+    raise InvalidInputError(
+        f"Could not resolve sidecar reference '{content_ref}'. Checked: {checked}"
+    )

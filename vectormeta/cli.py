@@ -7,17 +7,17 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
-from rich.console import Console
 import typer
+from rich.console import Console
 
 from vectormeta.analyzer import analyze_records
 from vectormeta.config import load_config
 from vectormeta.errors import VectorMetaError
-from vectormeta.fixer import DEFAULT_KEEP_FIELDS, FixOptions, fix_records, parse_field_list
+from vectormeta.fixer import DEFAULT_KEEP_FIELDS, fix_records, parse_field_list
 from vectormeta.hydrate import hydrate_records
 from vectormeta.io import ensure_output_writable, read_records, write_records, write_sidecars
 from vectormeta.limits import normalize_target, resolve_limit_bytes
-from vectormeta.models import HydrateMode, OutputFormat
+from vectormeta.models import FixOptions, HydrateMode, OutputFormat
 from vectormeta.reporting import (
     render_fix_summary,
     render_limits,
@@ -49,6 +49,7 @@ class HydrateModeOption(str, Enum):
     metadata = "metadata"
     content_field = "content_field"
 
+
 TargetOption = Annotated[
     str,
     typer.Option(
@@ -72,7 +73,9 @@ def scan(
     input_path: Annotated[Path, typer.Argument(help="JSON or JSONL vector records file.")],
     target: TargetOption = "pinecone",
     limit_kb: LimitOption = None,
-    top: Annotated[int, typer.Option("--top", min=1, help="Number of oversized records to show.")] = 10,
+    top: Annotated[
+        int, typer.Option("--top", min=1, help="Number of oversized records to show.")
+    ] = 10,
     output_format: Annotated[
         ScanFormat,
         typer.Option("--format", help="Output format: table or json."),
@@ -182,10 +185,14 @@ def fix(
 
         ensure_output_writable(out, overwrite=overwrite)
         write_sidecars(result.sidecars, overwrite=overwrite)
-        write_records(result.cleaned_records, out, _record_output_format(output_format), overwrite=overwrite)
+        write_records(
+            result.cleaned_records, out, _record_output_format(output_format), overwrite=overwrite
+        )
         console.print(f"[green]Wrote cleaned records to {out}.[/green]")
         if result.sidecars:
-            console.print(f"[green]Wrote {len(result.sidecars)} sidecar files to {resolved_sidecar}.[/green]")
+            console.print(
+                f"[green]Wrote {len(result.sidecars)} sidecar files to {resolved_sidecar}.[/green]"
+            )
     except VectorMetaError as exc:
         _print_error(exc)
         raise typer.Exit(2) from exc
@@ -206,7 +213,9 @@ def hydrate(
     ] = "payload",
     content_ref_field: Annotated[
         str,
-        typer.Option("--content-ref-field", help="Metadata field containing the sidecar reference."),
+        typer.Option(
+            "--content-ref-field", help="Metadata field containing the sidecar reference."
+        ),
     ] = "content_ref",
     overwrite: Annotated[
         bool,

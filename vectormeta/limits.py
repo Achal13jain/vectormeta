@@ -46,7 +46,9 @@ def normalize_target(target: str) -> str:
     normalized = target.strip().lower()
     if normalized not in TARGET_LIMITS:
         supported = ", ".join(sorted(TARGET_LIMITS))
-        raise UnsupportedTargetError(f"Unsupported target '{target}'. Supported targets: {supported}.")
+        raise UnsupportedTargetError(
+            f"Unsupported target '{target}'. Supported targets: {supported}."
+        )
     return normalized
 
 

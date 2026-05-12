@@ -114,7 +114,9 @@ def _fix_record(
     for field_name in move_fields:
         move_field(field_name)
 
-    keep_fields = set(options.keep_fields if options.keep_fields is not None else DEFAULT_KEEP_FIELDS)
+    keep_fields = set(
+        options.keep_fields if options.keep_fields is not None else DEFAULT_KEEP_FIELDS
+    )
     _move_until_under_limit(
         metadata=metadata,
         move_field=move_field,

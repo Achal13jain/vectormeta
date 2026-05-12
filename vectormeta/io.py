@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any, Iterable, Literal, Mapping
+from typing import Any, Literal
 
 from vectormeta.errors import InvalidInputError, OutputExistsError, SidecarConflictError
 from vectormeta.models import OutputFormat, Record, SidecarPayload
@@ -64,7 +65,9 @@ def write_records(
 def ensure_output_writable(path: Path, *, overwrite: bool) -> None:
     """Raise if a file exists and overwrite is disabled."""
     if path.exists() and not overwrite:
-        raise OutputExistsError(f"Output file already exists: {path}. Pass --overwrite to replace it.")
+        raise OutputExistsError(
+            f"Output file already exists: {path}. Pass --overwrite to replace it."
+        )
 
 
 def write_sidecars(sidecars: Iterable[SidecarPayload], *, overwrite: bool = False) -> None:
@@ -74,7 +77,9 @@ def write_sidecars(sidecars: Iterable[SidecarPayload], *, overwrite: bool = Fals
     duplicate_paths = {path for path in paths if paths.count(path) > 1}
     if duplicate_paths:
         conflicts = ", ".join(str(path) for path in sorted(duplicate_paths))
-        raise SidecarConflictError(f"Multiple records would write the same sidecar path: {conflicts}")
+        raise SidecarConflictError(
+            f"Multiple records would write the same sidecar path: {conflicts}"
+        )
 
     existing = [path for path in paths if path.exists() and not overwrite]
     if existing:

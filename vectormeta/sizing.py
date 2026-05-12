@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 from vectormeta.errors import InvalidInputError
 from vectormeta.models import FieldSize
@@ -25,7 +26,9 @@ def metadata_size_bytes(metadata: Mapping[str, Any]) -> int:
 def field_sizes(metadata: Mapping[str, Any]) -> list[FieldSize]:
     """Return top-level metadata field sizes sorted from largest to smallest."""
     sizes = [
-        FieldSize(field_name=str(field_name), size_bytes=len(compact_json_bytes({field_name: value})))
+        FieldSize(
+            field_name=str(field_name), size_bytes=len(compact_json_bytes({field_name: value}))
+        )
         for field_name, value in metadata.items()
     ]
     return sorted(sizes, key=lambda field_size: field_size.size_bytes, reverse=True)

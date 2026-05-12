@@ -90,7 +90,9 @@ def test_write_sidecars_protects_existing_files(tmp_path: Path) -> None:
     records = [{"id": "doc", "metadata": {"chunk_text": "payload"}}]
     result = fix_records(
         records,
-        FixOptions(target="custom", limit_bytes=1024, sidecar_dir=tmp_path, output_path=tmp_path / "out"),
+        FixOptions(
+            target="custom", limit_bytes=1024, sidecar_dir=tmp_path, output_path=tmp_path / "out"
+        ),
     )
     write_sidecars(result.sidecars)
 

@@ -8,9 +8,7 @@ from vectormeta.sizing import field_sizes, metadata_size_bytes
 def test_metadata_size_uses_utf8_compact_json() -> None:
     metadata = {"text": "hello 世界"}
 
-    expected = len(
-        json.dumps(metadata, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    )
+    expected = len(json.dumps(metadata, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
 
     assert metadata_size_bytes(metadata) == expected
     assert metadata_size_bytes(metadata) != len(str(metadata))
