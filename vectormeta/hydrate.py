@@ -80,6 +80,10 @@ def _resolve_sidecar_path(
 ) -> Path:
     ref_path = Path(content_ref)
     candidates: list[Path] = []
+    allowed_roots = [sidecar_dir]
+    if input_base_dir is not None:
+        allowed_roots.append(input_base_dir)
+
     if ref_path.is_absolute():
         candidates.append(ref_path)
     if input_base_dir is not None:
@@ -88,9 +92,18 @@ def _resolve_sidecar_path(
     candidates.append(sidecar_dir / ref_path)
 
     for candidate in candidates:
-        if candidate.exists():
+        if candidate.exists() and _is_allowed_sidecar_path(candidate, allowed_roots):
             return candidate
     checked = ", ".join(str(candidate) for candidate in candidates)
     raise InvalidInputError(
-        f"Could not resolve sidecar reference '{content_ref}'. Checked: {checked}"
+        f"Could not resolve sidecar reference '{content_ref}' inside allowed sidecar paths. "
+        f"Checked: {checked}"
+    )
+
+
+def _is_allowed_sidecar_path(candidate: Path, allowed_roots: list[Path]) -> bool:
+    resolved_candidate = candidate.resolve()
+    return any(
+        resolved_candidate == root.resolve() or resolved_candidate.is_relative_to(root.resolve())
+        for root in allowed_roots
     )

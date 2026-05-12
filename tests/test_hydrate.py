@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+from vectormeta.errors import InvalidInputError
 from vectormeta.fixer import FixOptions, fix_records
 from vectormeta.hydrate import hydrate_records
 from vectormeta.io import write_sidecars
@@ -52,3 +55,24 @@ def test_hydrate_can_restore_to_content_field(tmp_path: Path) -> None:
 
     assert hydrated[0]["metadata"] == {"source": "paper.pdf"}
     assert hydrated[0]["payload"] == {"summary": "payload"}
+
+
+def test_hydrate_rejects_sidecar_reference_outside_allowed_paths(tmp_path: Path) -> None:
+    outside_path = tmp_path.parent / "outside-sidecar.json"
+    outside_path.write_text('{"id":"doc","chunk_text":"secret"}\n', encoding="utf-8")
+    records = [
+        {
+            "id": "doc",
+            "metadata": {
+                "source": "paper.pdf",
+                "content_ref": str(outside_path.resolve()),
+            },
+        }
+    ]
+
+    with pytest.raises(InvalidInputError, match="allowed sidecar paths"):
+        hydrate_records(
+            records,
+            sidecar_dir=tmp_path / "sidecar",
+            input_base_dir=tmp_path,
+        )
