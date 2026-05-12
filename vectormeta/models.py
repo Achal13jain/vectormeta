@@ -2,3 +2,139 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Literal, Mapping
+
+Record = dict[str, Any]
+Metadata = Mapping[str, Any]
+OutputFormat = Literal["json", "jsonl"]
+ReportFormat = Literal["table", "json"]
+HydrateMode = Literal["metadata", "content_field"]
+
+
+@dataclass(frozen=True)
+class FieldSize:
+    """Serialized size for one top-level metadata field."""
+
+    field_name: str
+    size_bytes: int
+
+    @property
+    def size_kb(self) -> float:
+        """Return the field size in kibibytes."""
+        return self.size_bytes / 1024
+
+
+@dataclass(frozen=True)
+class RecordAnalysis:
+    """Metadata size analysis for one vector record."""
+
+    record_id: str
+    metadata_size_bytes: int
+    limit_bytes: int
+    largest_fields: list[FieldSize]
+
+    @property
+    def metadata_size_kb(self) -> float:
+        """Return the metadata size in kibibytes."""
+        return self.metadata_size_bytes / 1024
+
+    @property
+    def over_limit_by_bytes(self) -> int:
+        """Return the number of bytes over the configured limit."""
+        return max(0, self.metadata_size_bytes - self.limit_bytes)
+
+    @property
+    def is_oversized(self) -> bool:
+        """Return whether this record exceeds the configured metadata limit."""
+        return self.over_limit_by_bytes > 0
+
+
+@dataclass(frozen=True)
+class ScanReport:
+    """Aggregate scan result."""
+
+    target: str
+    limit_bytes: int
+    records: list[RecordAnalysis]
+
+    @property
+    def total_records(self) -> int:
+        """Return the total number of records scanned."""
+        return len(self.records)
+
+    @property
+    def oversized_count(self) -> int:
+        """Return the number of records exceeding the limit."""
+        return sum(record.is_oversized for record in self.records)
+
+    @property
+    def oversized_records(self) -> list[RecordAnalysis]:
+        """Return oversized records, largest first."""
+        return sorted(
+            (record for record in self.records if record.is_oversized),
+            key=lambda record: record.metadata_size_bytes,
+            reverse=True,
+        )
+
+
+@dataclass(frozen=True)
+class TargetLimit:
+    """Default metadata limit and note for a vector database target."""
+
+    name: str
+    limit_bytes: int | None
+    note: str
+
+    @property
+    def limit_kb(self) -> float | None:
+        """Return the limit in kibibytes when a default exists."""
+        if self.limit_bytes is None:
+            return None
+        return self.limit_bytes / 1024
+
+
+@dataclass(frozen=True)
+class FixOptions:
+    """Options used by the metadata fixer."""
+
+    target: str
+    limit_bytes: int
+    sidecar_dir: Path
+    output_path: Path | None = None
+    move_fields: tuple[str, ...] | None = None
+    keep_fields: tuple[str, ...] | None = None
+    content_ref_field: str = "content_ref"
+
+
+@dataclass(frozen=True)
+class SidecarPayload:
+    """A sidecar file planned by the fixer."""
+
+    record_id: str
+    path: Path
+    ref: str
+    payload: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class FixWarning:
+    """A non-fatal warning produced during fixing."""
+
+    record_id: str
+    message: str
+
+
+@dataclass(frozen=True)
+class FixResult:
+    """Cleaned records plus sidecar payloads."""
+
+    cleaned_records: list[Record]
+    sidecars: list[SidecarPayload]
+    warnings: list[FixWarning] = field(default_factory=list)
+
+    @property
+    def changed_count(self) -> int:
+        """Return how many records produced sidecar payloads."""
+        return len(self.sidecars)
