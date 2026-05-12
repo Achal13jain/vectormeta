@@ -24,6 +24,15 @@ def test_scan_exits_one_when_oversized(tmp_path: Path) -> None:
     assert "Oversized records" in result.output
 
 
+def test_version_option() -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["--version"])
+
+    assert result.exit_code == 0
+    assert "vectormeta 0.1.0" in result.output
+
+
 def test_scan_no_fail_exits_zero_when_oversized(tmp_path: Path) -> None:
     input_path = tmp_path / "records.json"
     input_path.write_text(

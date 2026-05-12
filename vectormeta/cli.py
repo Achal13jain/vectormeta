@@ -10,6 +10,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from vectormeta import __version__
 from vectormeta.analyzer import analyze_records
 from vectormeta.config import load_config
 from vectormeta.errors import VectorMetaError
@@ -66,6 +67,27 @@ LimitOption = Annotated[
 def main() -> None:
     """Run the CLI application."""
     app()
+
+
+def _version_callback(value: bool | None) -> None:
+    if value:
+        console.print(f"vectormeta {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def app_callback(
+    version: Annotated[
+        bool | None,
+        typer.Option(
+            "--version",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show the installed vectormeta version and exit.",
+        ),
+    ] = None,
+) -> None:
+    """Detect and fix oversized vector database metadata."""
 
 
 @app.command()
