@@ -7,7 +7,7 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
-from vectormeta.limits import get_target_limits
+from vectormeta.limits import advisory_limit_message, get_target_limit, get_target_limits
 from vectormeta.models import FixResult, RecordAnalysis, ScanReport
 
 
@@ -18,10 +18,15 @@ def bytes_to_kb(size_bytes: int) -> float:
 
 def scan_report_to_dict(report: ScanReport, *, top: int) -> dict[str, Any]:
     """Convert a scan report to stable JSON-serializable data."""
+    target_limit = get_target_limit(report.target)
+    advisory_message = advisory_limit_message(report.target, report.limit_bytes)
     return {
         "target": report.target,
         "limit_bytes": report.limit_bytes,
         "limit_kb": round(bytes_to_kb(report.limit_bytes), 3),
+        "limit_policy": target_limit.policy,
+        "limit_note": target_limit.note,
+        "limit_warning": advisory_message,
         "total_records": report.total_records,
         "oversized_count": report.oversized_count,
         "oversized_records": [
@@ -37,6 +42,9 @@ def render_scan_report(console: Console, report: ScanReport, *, top: int) -> Non
         f"[bold]Metadata limit:[/bold] {report.limit_bytes} bytes "
         f"({bytes_to_kb(report.limit_bytes):.2f} KB)"
     )
+    advisory_message = advisory_limit_message(report.target, report.limit_bytes)
+    if advisory_message is not None:
+        console.print(f"[yellow]Warning:[/yellow] {advisory_message}")
     console.print(f"[bold]Records scanned:[/bold] {report.total_records}")
     color = "red" if report.oversized_count else "green"
     console.print(f"[bold]Oversized records:[/bold] [{color}]{report.oversized_count}[/{color}]")
@@ -88,13 +96,14 @@ def render_limits(console: Console) -> None:
     table = Table(title="Vector DB Metadata Limit Presets")
     table.add_column("Target")
     table.add_column("Default Limit", justify="right")
+    table.add_column("Policy")
     table.add_column("Note", overflow="fold")
     for target_limit in get_target_limits():
         if target_limit.limit_bytes is None:
             limit = "custom"
         else:
             limit = f"{target_limit.limit_bytes} B / {target_limit.limit_bytes / 1024:.0f} KB"
-        table.add_row(target_limit.name, limit, target_limit.note)
+        table.add_row(target_limit.name, limit, target_limit.policy, target_limit.note)
     console.print(table)
     console.print(
         "[dim]Limits and service behavior can change. Verify official vector database docs "

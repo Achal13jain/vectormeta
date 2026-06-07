@@ -202,6 +202,16 @@ vectormeta fix chunks.json --target pinecone --sidecar ./sidecar --out ready.jso
 
 `fix` does not overwrite files unless `--overwrite` is passed.
 
+If your input metadata already contains `content_ref`, choose another reference field:
+
+```bash
+vectormeta fix chunks.json \
+  --target pinecone \
+  --content-ref-field vectormeta_content_ref \
+  --sidecar ./sidecar \
+  --out pinecone_ready.json
+```
+
 ### Hydrate
 
 ```bash
@@ -310,8 +320,12 @@ require a server or build step.
 
 ## Limitations
 
-- Local JSON sidecars only; no S3, SQLite, or object-store backend yet.
-- Input support is JSON arrays and JSONL records.
+- Local JSON sidecars only. Keep the cleaned output file and sidecar directory together;
+  the MVP does not provide an atomic database-backed sidecar store.
+- Sidecars are one file per changed record. The MVP does not deduplicate repeated fields
+  such as shared `raw_html` across chunks from the same document.
+- Input support is JSON arrays and JSONL records, but files are currently read into
+  memory. Streaming JSONL scan/fix is planned for larger embedding datasets.
 - Vector values are preserved but not deeply validated.
 - Non-Pinecone target limits are conservative advisory defaults, not vendor claims.
 - The fixer is policy-based; review cleaned outputs before production ingestion.
@@ -320,8 +334,10 @@ require a server or build step.
 
 Planned ideas include:
 
-- S3 sidecar backend
 - SQLite sidecar backend
+- Content-addressed sidecar deduplication
+- Streaming JSONL scan/fix
+- S3 sidecar backend
 - LangChain `Document` adapter
 - LlamaIndex `Node` adapter
 - Pinecone upsert wrapper

@@ -14,6 +14,7 @@ TARGET_LIMITS: Mapping[str, TargetLimit] = {
         name="pinecone",
         limit_bytes=40 * KB,
         note="Default Pinecone metadata limit used by this tool. Verify current official docs.",
+        policy="strict",
     ),
     "chroma": TargetLimit(
         name="chroma",
@@ -22,21 +23,25 @@ TARGET_LIMITS: Mapping[str, TargetLimit] = {
             "Advisory scan limit. Chroma deployments are often local/configurable; this is not "
             "a cloud-style hard-limit claim."
         ),
+        policy="advisory",
     ),
     "qdrant": TargetLimit(
         name="qdrant",
         limit_bytes=64 * KB,
         note="Conservative advisory default. Configure --limit-kb for your deployment.",
+        policy="advisory",
     ),
     "weaviate": TargetLimit(
         name="weaviate",
         limit_bytes=64 * KB,
         note="Conservative advisory default. Configure --limit-kb for your deployment.",
+        policy="advisory",
     ),
     "custom": TargetLimit(
         name="custom",
         limit_bytes=None,
         note="Requires --limit-kb.",
+        policy="custom",
     ),
 }
 
@@ -69,3 +74,21 @@ def resolve_limit_bytes(target: str, limit_kb: float | None = None) -> int:
 def get_target_limits() -> list[TargetLimit]:
     """Return known target limit presets in display order."""
     return [TARGET_LIMITS[name] for name in ("pinecone", "chroma", "qdrant", "weaviate", "custom")]
+
+
+def get_target_limit(target: str) -> TargetLimit:
+    """Return limit metadata for a normalized target."""
+    return TARGET_LIMITS[normalize_target(target)]
+
+
+def advisory_limit_message(target: str, limit_bytes: int) -> str | None:
+    """Return a visible advisory warning for non-strict target presets."""
+    target_limit = get_target_limit(target)
+    if target_limit.policy != "advisory":
+        return None
+    limit_kb = limit_bytes / KB
+    return (
+        f"{target_limit.name} limit is advisory ({limit_kb:g} KB). "
+        "Verify the limit against your deployment configuration before treating this "
+        "scan as a hard guarantee."
+    )

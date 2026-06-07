@@ -82,9 +82,30 @@ Sidecar behavior is designed to avoid common filesystem mistakes:
 
 - Sidecar filenames are sanitized from record IDs.
 - Duplicate sidecar filenames get deterministic suffixes.
+- Existing `content_ref` metadata is not overwritten. Use `--content-ref-field` to choose
+  another field name when inputs already use `content_ref`.
 - Existing sidecar files are not overwritten unless `--overwrite` is passed.
 - Output files are not overwritten unless `--overwrite` is passed.
 - `content_ref` is relative to the output file's parent directory when possible.
+
+## Sidecar Policy
+
+The MVP writes one sidecar JSON file per changed record. It does not deduplicate repeated
+payload fields across chunks. For example, if 20 chunks from the same document each move
+the same `raw_html` value, the current local JSON sidecar backend stores that value 20
+times.
+
+This policy keeps hydration simple and predictable: every cleaned record points to one
+sidecar file that contains the fields removed from that record. Future backends can add
+content-addressed deduplication or a SQLite sidecar store without changing the basic
+scan/fix/hydrate workflow.
+
+## Large File Policy
+
+JSON arrays and JSONL files are currently loaded into memory before scanning or fixing.
+This is acceptable for small and medium migration checks, but it is not the right shape
+for millions of embedding chunks. Streaming JSONL scan/fix is a planned follow-up so
+large pipelines can process records one at a time.
 
 ## Hydration Logic
 

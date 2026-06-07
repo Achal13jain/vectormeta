@@ -12,6 +12,7 @@ Metadata = Mapping[str, Any]
 OutputFormat = Literal["json", "jsonl"]
 ReportFormat = Literal["table", "json"]
 HydrateMode = Literal["metadata", "content_field"]
+LimitPolicy = Literal["strict", "advisory", "custom"]
 
 
 @dataclass(frozen=True)
@@ -87,6 +88,7 @@ class TargetLimit:
     name: str
     limit_bytes: int | None
     note: str
+    policy: LimitPolicy
 
     @property
     def limit_kb(self) -> float | None:

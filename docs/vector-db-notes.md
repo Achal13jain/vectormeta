@@ -14,15 +14,21 @@ Chroma is often local or deployment-configurable. `vectormeta` uses an advisory 
 default so teams can catch large payloads early, but it does not claim a universal
 cloud-style Chroma metadata limit.
 
+The CLI prints an advisory warning when using this preset.
+
 ## Qdrant
 
 `vectormeta` uses a conservative advisory default for Qdrant. Configure `--limit-kb`
 for your own cluster, ingestion process, and operational preferences.
 
+The CLI prints an advisory warning when using this preset.
+
 ## Weaviate
 
 `vectormeta` uses a conservative advisory default for Weaviate. Configure `--limit-kb`
 for your own schema, deployment, and ingestion process.
+
+The CLI prints an advisory warning when using this preset.
 
 ## Custom
 

@@ -17,7 +17,7 @@ from vectormeta.errors import VectorMetaError
 from vectormeta.fixer import DEFAULT_KEEP_FIELDS, fix_records, parse_field_list
 from vectormeta.hydrate import hydrate_records
 from vectormeta.io import ensure_output_writable, read_records, write_records, write_sidecars
-from vectormeta.limits import normalize_target, resolve_limit_bytes
+from vectormeta.limits import advisory_limit_message, normalize_target, resolve_limit_bytes
 from vectormeta.models import FixOptions, HydrateMode, OutputFormat
 from vectormeta.reporting import (
     render_fix_summary,
@@ -178,6 +178,9 @@ def fix(
         resolved_target = normalize_target(target or loaded_config.target or "pinecone")
         resolved_limit_kb = limit_kb if limit_kb is not None else loaded_config.limit_kb
         limit_bytes = resolve_limit_bytes(resolved_target, resolved_limit_kb)
+        advisory_message = advisory_limit_message(resolved_target, limit_bytes)
+        if advisory_message is not None:
+            console.print(f"[yellow]Warning:[/yellow] {advisory_message}")
         resolved_sidecar = sidecar or loaded_config.sidecar_dir or Path("sidecar")
         resolved_ref_field = content_ref_field or loaded_config.content_ref_field or "content_ref"
         resolved_move_fields = parse_field_list(move_fields)

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from vectormeta.analyzer import get_metadata, get_record_id
+from vectormeta.errors import SidecarConflictError
 from vectormeta.models import FixOptions, FixResult, FixWarning, Record, SidecarPayload
 from vectormeta.sizing import field_sizes, metadata_size_bytes
 
@@ -101,9 +102,20 @@ def _fix_record(
     sidecar_ref = _content_ref(sidecar_path, options.output_path)
 
     def ensure_ref() -> None:
+        if (
+            options.content_ref_field in metadata
+            and metadata[options.content_ref_field] != sidecar_ref
+        ):
+            raise SidecarConflictError(
+                f"Record '{record_id}' already has metadata field "
+                f"'{options.content_ref_field}'. Pass --content-ref-field with a different "
+                "name to avoid overwriting existing metadata."
+            )
         metadata[options.content_ref_field] = sidecar_ref
 
     def move_field(field_name: str) -> bool:
+        if field_name == options.content_ref_field:
+            return False
         if field_name not in metadata:
             return False
         payload_fields[field_name] = metadata.pop(field_name)

@@ -82,6 +82,29 @@ def test_fix_records_moves_largest_non_keep_fields_until_under_limit(tmp_path: P
     assert result.sidecars[0].payload["notes"] == "n" * 120
 
 
+def test_fix_records_rejects_content_ref_collision(tmp_path: Path) -> None:
+    records = [
+        {
+            "id": "doc",
+            "metadata": {
+                "content_ref": "existing/location.json",
+                "chunk_text": "payload",
+            },
+        }
+    ]
+
+    with pytest.raises(SidecarConflictError, match="--content-ref-field"):
+        fix_records(
+            records,
+            FixOptions(
+                target="pinecone",
+                limit_bytes=40 * 1024,
+                sidecar_dir=tmp_path / "sidecar",
+                output_path=tmp_path / "ready.json",
+            ),
+        )
+
+
 def test_sanitize_sidecar_filename_removes_unsafe_characters() -> None:
     assert sanitize_sidecar_filename("../doc/1?") == "doc_1"
 

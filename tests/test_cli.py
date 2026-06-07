@@ -50,6 +50,29 @@ def test_scan_no_fail_exits_zero_when_oversized(tmp_path: Path) -> None:
     assert "Oversized records" in result.output
 
 
+def test_scan_prints_advisory_warning_for_non_pinecone_target(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.json"
+    input_path.write_text('[{"id":"doc","metadata":{"source":"paper.pdf"}}]', encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["scan", str(input_path), "--target", "chroma"])
+
+    assert result.exit_code == 0
+    assert "chroma limit is advisory" in result.output
+
+
+def test_scan_json_includes_limit_policy_for_advisory_target(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.json"
+    input_path.write_text('[{"id":"doc","metadata":{"source":"paper.pdf"}}]', encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["scan", str(input_path), "--target", "qdrant", "--format", "json"])
+
+    assert result.exit_code == 0
+    assert '"limit_policy": "advisory"' in result.output
+    assert "qdrant limit is advisory" in result.output
+
+
 def test_fix_and_hydrate_cli_round_trip(tmp_path: Path) -> None:
     input_path = tmp_path / "records.json"
     ready_path = tmp_path / "ready.json"
