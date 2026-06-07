@@ -35,6 +35,13 @@ def scan_report_to_dict(report: ScanReport, *, top: int) -> dict[str, Any]:
     }
 
 
+def render_limit_warning(console: Console, *, target: str, limit_bytes: int) -> None:
+    """Render advisory limit warnings for human-readable command output."""
+    advisory_message = advisory_limit_message(target, limit_bytes)
+    if advisory_message is not None:
+        console.print(f"[yellow]Warning:[/yellow] {advisory_message}")
+
+
 def render_scan_report(console: Console, report: ScanReport, *, top: int) -> None:
     """Render a human-readable scan report."""
     console.print(f"[bold]Target:[/bold] {report.target}")
@@ -42,9 +49,7 @@ def render_scan_report(console: Console, report: ScanReport, *, top: int) -> Non
         f"[bold]Metadata limit:[/bold] {report.limit_bytes} bytes "
         f"({bytes_to_kb(report.limit_bytes):.2f} KB)"
     )
-    advisory_message = advisory_limit_message(report.target, report.limit_bytes)
-    if advisory_message is not None:
-        console.print(f"[yellow]Warning:[/yellow] {advisory_message}")
+    render_limit_warning(console, target=report.target, limit_bytes=report.limit_bytes)
     console.print(f"[bold]Records scanned:[/bold] {report.total_records}")
     color = "red" if report.oversized_count else "green"
     console.print(f"[bold]Oversized records:[/bold] [{color}]{report.oversized_count}[/{color}]")

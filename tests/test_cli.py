@@ -73,6 +73,34 @@ def test_scan_json_includes_limit_policy_for_advisory_target(tmp_path: Path) -> 
     assert "qdrant limit is advisory" in result.output
 
 
+def test_fix_prints_advisory_warning_for_non_pinecone_target(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.json"
+    ready_path = tmp_path / "ready.json"
+    sidecar_path = tmp_path / "sidecar"
+    input_path.write_text(
+        '[{"id":"doc","values":[0.1],"metadata":{"source":"paper.pdf","chunk_text":"payload"}}]',
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "fix",
+            str(input_path),
+            "--target",
+            "chroma",
+            "--sidecar",
+            str(sidecar_path),
+            "--out",
+            str(ready_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "chroma limit is advisory" in result.output
+
+
 def test_fix_and_hydrate_cli_round_trip(tmp_path: Path) -> None:
     input_path = tmp_path / "records.json"
     ready_path = tmp_path / "ready.json"
