@@ -76,3 +76,30 @@ def test_hydrate_rejects_sidecar_reference_outside_allowed_paths(tmp_path: Path)
             sidecar_dir=tmp_path / "sidecar",
             input_base_dir=tmp_path,
         )
+
+
+def test_hydrate_preserves_nested_sidecar_reference(tmp_path: Path) -> None:
+    sidecar_dir = tmp_path / "sidecar"
+    nested_dir = sidecar_dir / "subdir"
+    nested_dir.mkdir(parents=True)
+    (sidecar_dir / "doc.json").write_text(
+        '{"id":"wrong","chunk_text":"wrong"}\n',
+        encoding="utf-8",
+    )
+    (nested_dir / "doc.json").write_text(
+        '{"id":"doc","chunk_text":"expected"}\n',
+        encoding="utf-8",
+    )
+    records = [
+        {
+            "id": "doc",
+            "metadata": {
+                "source": "paper.pdf",
+                "content_ref": "sidecar/subdir/doc.json",
+            },
+        }
+    ]
+
+    hydrated = hydrate_records(records, sidecar_dir=sidecar_dir)
+
+    assert hydrated[0]["metadata"]["chunk_text"] == "expected"

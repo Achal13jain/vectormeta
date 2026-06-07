@@ -189,13 +189,13 @@ def _move_until_under_limit(
     limit_bytes: int,
     protected_fields: set[str],
 ) -> None:
-    while metadata_size_bytes(metadata) > limit_bytes:
-        candidates = [
-            size for size in field_sizes(metadata) if size.field_name not in protected_fields
-        ]
-        if not candidates:
-            return
-        move_field(candidates[0].field_name)
+    candidates = [
+        size.field_name for size in field_sizes(metadata) if size.field_name not in protected_fields
+    ]
+    candidate_index = 0
+    while metadata_size_bytes(metadata) > limit_bytes and candidate_index < len(candidates):
+        move_field(candidates[candidate_index])
+        candidate_index += 1
 
 
 def _unique_sidecar_path(record_id: str, sidecar_dir: Path, used_names: set[str]) -> Path:

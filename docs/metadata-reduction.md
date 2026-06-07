@@ -118,7 +118,11 @@ either:
 Hydration removes `content_ref` after restoring the payload.
 
 Sidecar references are resolved only inside the provided sidecar directory or input base
-directory. This reduces path traversal risk.
+directory. Resolution preserves nested references. If a reference includes the sidecar
+directory name, such as `sidecar/subdir/doc.json`, hydration may strip that leading
+directory segment and resolve `subdir/doc.json` inside the provided sidecar directory.
+It does not fall back to a bare filename before trying the nested path. This reduces
+path traversal risk while avoiding accidental hydration from the wrong sidecar file.
 
 ## Correctness Checks
 

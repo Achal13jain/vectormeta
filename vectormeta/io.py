@@ -74,7 +74,13 @@ def write_sidecars(sidecars: Iterable[SidecarPayload], *, overwrite: bool = Fals
     """Write sidecar payloads as JSON files."""
     sidecar_list = list(sidecars)
     paths = [sidecar.path for sidecar in sidecar_list]
-    duplicate_paths = {path for path in paths if paths.count(path) > 1}
+    seen_paths: set[Path] = set()
+    duplicate_paths: set[Path] = set()
+    for path in paths:
+        if path in seen_paths:
+            duplicate_paths.add(path)
+        else:
+            seen_paths.add(path)
     if duplicate_paths:
         conflicts = ", ".join(str(path) for path in sorted(duplicate_paths))
         raise SidecarConflictError(

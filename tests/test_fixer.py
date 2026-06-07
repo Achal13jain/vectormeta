@@ -7,6 +7,7 @@ import pytest
 from vectormeta.errors import SidecarConflictError
 from vectormeta.fixer import FixOptions, fix_records, sanitize_sidecar_filename
 from vectormeta.io import write_sidecars
+from vectormeta.models import SidecarPayload
 
 
 def test_fix_records_moves_heavy_fields_to_sidecar(tmp_path: Path) -> None:
@@ -105,6 +106,28 @@ def test_fix_records_rejects_content_ref_collision(tmp_path: Path) -> None:
         )
 
 
+def test_fix_records_warns_when_record_still_oversized_after_all_moves(
+    tmp_path: Path,
+) -> None:
+    records = [{"id": "doc", "metadata": {"notes": "payload"}}]
+
+    result = fix_records(
+        records,
+        FixOptions(
+            target="custom",
+            limit_bytes=1,
+            sidecar_dir=tmp_path / "sidecar",
+            output_path=tmp_path / "ready.json",
+            move_fields=(),
+            keep_fields=(),
+        ),
+    )
+
+    assert result.warnings
+    assert "still exceeds the metadata limit" in result.warnings[0].message
+    assert result.cleaned_records[0]["metadata"] == {"content_ref": "sidecar/doc.json"}
+
+
 def test_sanitize_sidecar_filename_removes_unsafe_characters() -> None:
     assert sanitize_sidecar_filename("../doc/1?") == "doc_1"
 
@@ -121,3 +144,13 @@ def test_write_sidecars_protects_existing_files(tmp_path: Path) -> None:
 
     with pytest.raises(SidecarConflictError):
         write_sidecars(result.sidecars)
+
+
+def test_write_sidecars_rejects_duplicate_paths_in_one_batch(tmp_path: Path) -> None:
+    sidecars = [
+        SidecarPayload(record_id="doc-1", path=tmp_path / "same.json", ref="same.json", payload={}),
+        SidecarPayload(record_id="doc-2", path=tmp_path / "same.json", ref="same.json", payload={}),
+    ]
+
+    with pytest.raises(SidecarConflictError, match="Multiple records"):
+        write_sidecars(sidecars)

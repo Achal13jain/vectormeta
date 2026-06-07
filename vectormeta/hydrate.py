@@ -84,12 +84,19 @@ def _resolve_sidecar_path(
     if input_base_dir is not None:
         allowed_roots.append(input_base_dir)
 
+    def add_candidate(candidate: Path) -> None:
+        if candidate not in candidates:
+            candidates.append(candidate)
+
     if ref_path.is_absolute():
-        candidates.append(ref_path)
-    if input_base_dir is not None:
-        candidates.append(input_base_dir / ref_path)
-    candidates.append(sidecar_dir / ref_path.name)
-    candidates.append(sidecar_dir / ref_path)
+        add_candidate(ref_path)
+    else:
+        if input_base_dir is not None:
+            add_candidate(input_base_dir / ref_path)
+        add_candidate(sidecar_dir / ref_path)
+        stripped_ref = _strip_sidecar_dir_prefix(ref_path, sidecar_dir)
+        if stripped_ref != ref_path:
+            add_candidate(sidecar_dir / stripped_ref)
 
     for candidate in candidates:
         if candidate.exists() and _is_allowed_sidecar_path(candidate, allowed_roots):
@@ -107,3 +114,9 @@ def _is_allowed_sidecar_path(candidate: Path, allowed_roots: list[Path]) -> bool
         resolved_candidate == root.resolve() or resolved_candidate.is_relative_to(root.resolve())
         for root in allowed_roots
     )
+
+
+def _strip_sidecar_dir_prefix(ref_path: Path, sidecar_dir: Path) -> Path:
+    if ref_path.parts and ref_path.parts[0] == sidecar_dir.name:
+        return Path(*ref_path.parts[1:])
+    return ref_path
