@@ -8,6 +8,13 @@
       name="description"
       content="vectormeta scans vector records, finds oversized metadata, and moves heavy fields into sidecar JSON files before vector database upsert."
     />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <script>
       (() => {
         const storedTheme = localStorage.getItem("vectormeta-theme");
@@ -21,15 +28,20 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="ambient" aria-hidden="true"></div>
+
     <header class="topbar">
-      <a class="brand" href="#top">vectormeta</a>
+      <a class="brand" href="#top">
+        <img class="brand-mark" src="favicon.svg" alt="" width="24" height="24" />
+        vectormeta
+      </a>
       <nav aria-label="Primary navigation">
         <a href="#problem">Problem</a>
         <a href="#workflow">Workflow</a>
-        <a href="#cli">CLI</a>
+        <a href="#logic">Logic</a>
+        <a href="#limits">Limits</a>
         <a href="#quality">Quality</a>
         <a href="https://github.com/Achal13jain/vectormeta#readme">Docs</a>
-        <a href="https://github.com/Achal13jain/vectormeta">GitHub</a>
       </nav>
       <div class="nav-actions">
         <button class="theme-toggle" type="button" aria-label="Switch theme" aria-pressed="false">
@@ -62,172 +74,322 @@
             />
           </svg>
         </button>
-        <a class="github-button" href="https://github.com/Achal13jain/vectormeta"
-          >Star on GitHub</a
+        <a class="button button-secondary compact" href="https://github.com/Achal13jain/vectormeta"
+          >GitHub</a
+        >
+        <a
+          class="button button-primary compact"
+          href="https://github.com/Achal13jain/vectormeta#installation"
+          >Install</a
         >
       </div>
     </header>
 
-    <main id="top" class="page-shell">
-      <section class="hero">
+    <main id="top">
+      <section class="hero section-band">
         <div class="hero-copy">
-          <p class="eyebrow">Python CLI for vector database hygiene</p>
-          <h1>Stop vector DB metadata limit errors before upsert.</h1>
+          <p class="version-pill"><span></span> v0.1.0 - MIT License</p>
+          <h1>
+            Stop vector DB metadata
+            <span class="accent-text">limit errors</span> before upsert.
+          </h1>
           <p class="lede">
-            Scan JSON/JSONL records, detect oversized fields, and automatically move
-            heavy payloads to sidecar JSON files while keeping filterable metadata clean.
+            Scan JSON/JSONL records, detect oversized fields, and move heavy payloads to
+            sidecar files while keeping vector metadata small, filterable, and ready for
+            upload.
           </p>
-          <div class="actions">
-            <a class="button button-primary" href="#cli">View commands</a>
-            <a class="button button-secondary" href="https://github.com/Achal13jain/vectormeta#readme"
-              >Read docs</a
-            >
+          <div class="actions center">
+            <a class="button button-primary" href="#workflow">See workflow</a>
+            <a class="button button-secondary" href="#problem">View example</a>
           </div>
         </div>
 
-        <div class="hero-preview" aria-label="Before and after metadata cleanup">
-          <div class="code-card warning-card">
-            <span class="code-label">{ Oversized }</span>
-            <pre><code>"metadata": {
-  "source": "doc.pdf",
-  "chunk_text": "54 KB...",
-  "raw_html": "10 KB..."
-}</code></pre>
+        <div class="terminal-shell" aria-label="vectormeta command line workflow">
+          <div class="terminal-bar">
+            <span class="dot red"></span>
+            <span class="dot amber"></span>
+            <span class="dot green"></span>
+            <span>vectormeta - scan + fix + hydrate</span>
           </div>
-          <div class="flow-mark">
-            <span aria-hidden="true">-&gt;</span>
-            <small>vectormeta fix</small>
-          </div>
-          <div class="code-card success-card">
-            <span class="code-label">{ Clean }</span>
-            <pre><code>"metadata": {
-  "source": "doc.pdf",
-  "page": 42,
-  "content_ref": "sidecar/doc_42.json"
-}</code></pre>
+          <div class="terminal-body">
+            <p><span class="prompt">$</span> vectormeta scan records.json --target pinecone</p>
+            <p class="muted">Target: pinecone  /  Limit: 40960 bytes (40.00 KB)</p>
+            <p class="muted">Records scanned: 2  /  <span class="danger">Oversized: 1</span></p>
+            <p class="muted indent">
+              doc_123_chunk_4 -> 76,747 B; largest fields: chunk_text, raw_html, summary
+            </p>
+            <p class="gap"><span class="prompt">$</span> vectormeta fix records.json --target pinecone --sidecar ./sidecar --out ready.json</p>
+            <p class="success">Fix summary: updated 2 records; 2 records have sidecar payloads.</p>
+            <p class="gap"><span class="prompt">$</span> vectormeta scan ready.json --target pinecone</p>
+            <p class="success">All records are within the configured metadata limit.<span class="cursor"></span></p>
           </div>
         </div>
       </section>
 
-      <section id="problem" class="section problem-section">
-        <h2>The Metadata Limit Problem</h2>
-        <div class="problem-grid">
-          <div class="failure-panel">
-            <h3>Upsert Failed</h3>
-            <pre><code>Error: Metadata size 76,747 bytes exceeds Pinecone policy limit of 40 KB.</code></pre>
-          </div>
+      <section id="problem" class="section-band transform-section">
+        <div class="section-heading centered">
+          <p class="eyebrow">Before and after</p>
+          <h2>Move storage-heavy payloads out of filterable metadata.</h2>
           <p>
-            Vector databases are optimized for search, not storage. When embedding
-            pipelines blindly inject full text, extracted HTML, or raw tables into
-            metadata fields, they can breach strict payload limits. This causes failures
-            late in expensive processing pipelines.
+            vectormeta keeps source, page, doc_id, and tags in the vector DB record, then
+            writes text, HTML, tables, and summaries to local sidecar JSON.
           </p>
+        </div>
+
+        <div class="transform-grid">
+          <article class="code-panel">
+            <div class="code-panel-header">
+              <span class="badge danger">Oversized / 76.7 KB</span>
+              <span>exceeds 40 KB</span>
+            </div>
+            <pre><code>{
+  <span class="key">"id"</span>: <span class="val">"doc_123_chunk_4"</span>,
+  <span class="key">"metadata"</span>: {
+    <span class="key">"source"</span>: <span class="val">"paper.pdf"</span>,
+    <span class="key">"page"</span>: <span class="number">12</span>,
+    <span class="key">"doc_id"</span>: <span class="val">"doc_123"</span>,
+    <span class="key moved">"chunk_text"</span>: <span class="moved">"55 KB of text..."</span>,
+    <span class="key moved">"raw_html"</span>: <span class="moved">"10 KB of HTML..."</span>,
+    <span class="key moved">"summary"</span>: <span class="moved">"9.5 KB summary..."</span>
+  }
+}</code></pre>
+          </article>
+
+          <div class="flow-card">
+            <span>vectormeta fix</span>
+            <strong>-></strong>
+            <small>sidecar/doc_123_chunk_4.json</small>
+          </div>
+
+          <article class="code-panel">
+            <div class="code-panel-header">
+              <span class="badge success">Clean / under 1 KB</span>
+              <span>fits policy</span>
+            </div>
+            <pre><code>{
+  <span class="key">"id"</span>: <span class="val">"doc_123_chunk_4"</span>,
+  <span class="key">"metadata"</span>: {
+    <span class="key">"source"</span>: <span class="val">"paper.pdf"</span>,
+    <span class="key">"page"</span>: <span class="number">12</span>,
+    <span class="key">"doc_id"</span>: <span class="val">"doc_123"</span>,
+    <span class="key">"content_ref"</span>: <span class="val">"sidecar/doc_123_chunk_4.json"</span>
+  }
+}
+
+<span class="comment">// sidecar/doc_123_chunk_4.json</span>
+{
+  <span class="key">"id"</span>: <span class="val">"doc_123_chunk_4"</span>,
+  <span class="key">"chunk_text"</span>: <span class="val">"55 KB of text..."</span>,
+  <span class="key">"raw_html"</span>: <span class="val">"10 KB of HTML..."</span>,
+  <span class="key">"summary"</span>: <span class="val">"9.5 KB summary..."</span>
+}</code></pre>
+          </article>
         </div>
       </section>
 
-      <section id="workflow" class="section">
-        <h2>Workflow</h2>
+      <section id="workflow" class="section-band workflow-band">
+        <div class="section-heading">
+          <p class="eyebrow">Workflow</p>
+          <h2>Three commands. No blind truncation.</h2>
+          <p>Use it locally before upsert, or wire it into CI as a metadata hygiene gate.</p>
+        </div>
+
         <div class="workflow-grid">
-          <article>
-            <span class="icon-box">01</span>
-            <h3>Scan</h3>
+          <article class="step-card">
+            <span class="step-index">01 / SCAN</span>
+            <h3>Detect oversized records</h3>
             <p>
-              Measure compact UTF-8 JSON metadata size across thousands of records and
-              identify the offenders.
+              Measure compact UTF-8 JSON byte size, identify oversized records, and show
+              the largest top-level metadata fields.
             </p>
+            <code><span>$</span> vectormeta scan records.json --target pinecone</code>
           </article>
-          <article>
-            <span class="icon-box">02</span>
-            <h3>Fix</h3>
+          <article class="step-card">
+            <span class="step-index">02 / FIX</span>
+            <h3>Move heavy fields</h3>
             <p>
-              Move heavy fields into sidecar JSON files while preserving clean filterable
-              metadata.
+              Move text, HTML, summaries, tables, and OCR payloads into sidecars while
+              preserving useful filter fields.
             </p>
+            <code><span>$</span> vectormeta fix records.json --sidecar ./sidecar --out ready.json</code>
           </article>
-          <article>
-            <span class="icon-box">03</span>
-            <h3>Hydrate</h3>
+          <article class="step-card">
+            <span class="step-index">03 / HYDRATE</span>
+            <h3>Restore for inspection</h3>
             <p>
-              Restore sidecar payloads back into records for local debugging, inspection,
-              or migrations.
+              Load content_ref sidecars back into records for debugging, migration work,
+              or local data review.
             </p>
+            <code><span>$</span> vectormeta hydrate ready.json --sidecar ./sidecar</code>
           </article>
         </div>
       </section>
 
-      <section id="cli" class="section">
-        <h2>CLI Commands</h2>
-        <div class="command-stack">
-          <div class="command-row">
-            <span>Scan and report</span>
-            <code>vectormeta scan examples/oversized_pinecone_records.json --target pinecone --no-fail</code>
-          </div>
-          <div class="command-row">
-            <span>Fix and extract</span>
-            <code>vectormeta fix examples/oversized_pinecone_records.json --target pinecone --sidecar examples/sidecar --out examples/pinecone_ready.json --overwrite</code>
-          </div>
-          <div class="command-row">
-            <span>Hydrate and restore</span>
-            <code>vectormeta hydrate examples/pinecone_ready.json --sidecar examples/sidecar --out examples/hydrated.json --overwrite</code>
-          </div>
-        </div>
-      </section>
-
-      <section class="section reduction-section">
-        <div>
-          <h2>Intelligent Reduction</h2>
+      <section id="logic" class="section-band logic-section">
+        <div class="section-heading">
+          <p class="eyebrow">Reduction logic</p>
+          <h2>Designed to keep vectors searchable.</h2>
           <p>
-            vectormeta does not blindly truncate strings. It understands top-level
-            metadata fields, measures real serialized byte size, and preserves search
-            decisions that keep vectors filterable.
+            The fixer follows a predictable policy order so cleaned metadata stays small
+            without losing the fields your filters depend on.
           </p>
         </div>
-        <div class="logic-list">
-          <div>
-            <span class="check">OK</span>
+
+        <div class="logic-grid">
+          <article>
+            <span class="logic-marker blue">1</span>
             <div>
-              <h3>UTF-8 JSON sizing</h3>
-              <p>Measures the exact byte size of compact JSON metadata.</p>
+              <h3>Exact UTF-8 JSON sizing</h3>
+              <p>Uses compact JSON bytes, not character counts or Python string reprs.</p>
             </div>
-          </div>
-          <div>
-            <span class="check">OK</span>
+          </article>
+          <article>
+            <span class="logic-marker amber">2</span>
             <div>
-              <h3>Move heavy fields first</h3>
-              <p>Moves keys such as text, chunk_text, raw_html, markdown, and summary.</p>
+              <h3>Move explicit fields first</h3>
+              <p>Respects --move-fields before built-in heavy-field defaults.</p>
             </div>
-          </div>
-          <div>
-            <span class="check">OK</span>
+          </article>
+          <article>
+            <span class="logic-marker amber">3</span>
             <div>
-              <h3>Preserve keep fields</h3>
-              <p>Keeps filterable metadata like source, page, doc_id, tags, and language.</p>
+              <h3>Greedy non-keep removal</h3>
+              <p>Moves the largest non-keep fields one at a time until metadata fits.</p>
             </div>
-          </div>
+          </article>
+          <article>
+            <span class="logic-marker green">4</span>
+            <div>
+              <h3>Protect filterable fields</h3>
+              <p>Keeps source, page, doc_id, tags, language, and related fields by default.</p>
+            </div>
+          </article>
+          <article>
+            <span class="logic-marker red">5</span>
+            <div>
+              <h3>Warn on hard tradeoffs</h3>
+              <p>Reports when keep fields must move or a record still cannot fit.</p>
+            </div>
+          </article>
+          <article>
+            <span class="logic-marker blue">6</span>
+            <div>
+              <h3>Safe local sidecars</h3>
+              <p>Sanitized filenames, overwrite protection, and path-traversal checks.</p>
+            </div>
+          </article>
         </div>
       </section>
 
-      <section id="quality" class="section">
-        <h2>Built for Production Checks</h2>
-        <div class="badge-grid">
+      <section id="limits" class="section-band limits-section">
+        <div class="section-heading">
+          <p class="eyebrow">Limit presets</p>
+          <h2>Clear policies for strict and advisory targets.</h2>
+          <p>
+            Pinecone is the clearest strict-limit target in the MVP. Other presets are
+            advisory and should be verified against your deployment.
+          </p>
+        </div>
+
+        <div class="table-wrap">
+          <table class="limits-table">
+            <thead>
+              <tr>
+                <th>Target</th>
+                <th>Default</th>
+                <th>Policy</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>pinecone</td>
+                <td>40 KB</td>
+                <td><span class="pill strict">strict</span></td>
+                <td>Primary MVP target. Verify current official docs.</td>
+              </tr>
+              <tr>
+                <td>chroma</td>
+                <td>256 KB</td>
+                <td><span class="pill advisory">advisory</span></td>
+                <td>Local/configurable deployments. Not a universal hard limit.</td>
+              </tr>
+              <tr>
+                <td>qdrant</td>
+                <td>64 KB</td>
+                <td><span class="pill advisory">advisory</span></td>
+                <td>Conservative default. Configure --limit-kb for your cluster.</td>
+              </tr>
+              <tr>
+                <td>weaviate</td>
+                <td>64 KB</td>
+                <td><span class="pill advisory">advisory</span></td>
+                <td>Conservative default. Configure --limit-kb for your schema.</td>
+              </tr>
+              <tr>
+                <td>custom</td>
+                <td>required</td>
+                <td><span class="pill custom">manual</span></td>
+                <td>Use --target custom --limit-kb for team-specific policy.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="quality" class="section-band quality-section">
+        <div class="section-heading">
+          <p class="eyebrow">Production checks</p>
+          <h2>Built for production workflows</h2>
+          <p>Typed, tested, and linted. Designed to slot into CI without changes.</p>
+        </div>
+        <div class="chip-grid">
           <span>Python 3.10+</span>
           <span>Typer CLI</span>
           <span>Rich output</span>
-          <span>Pytest coverage</span>
+          <span>Pydantic config</span>
+          <span>JSON + JSONL</span>
+          <span>Pytest tests</span>
           <span>Ruff linting</span>
           <span>Mypy strict</span>
           <span>GitHub Actions CI</span>
+          <span>Overwrite protection</span>
+          <span>Path traversal checks</span>
           <span>Local-only sidecars</span>
         </div>
       </section>
 
       <section class="cta">
         <h2>Use vectormeta before your next vector DB upsert.</h2>
+        <p>Clone the repo, install locally, and scan your records before they fail late.</p>
+        <div class="install-command">
+          <code><span>$</span> pip install -e ".[dev]"</code>
+          <button type="button" class="copy-button" aria-label="Copy install command">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+              <rect
+                x="9"
+                y="9"
+                width="13"
+                height="13"
+                rx="2"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path
+                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span>Copy</span>
+          </button>
+        </div>
         <div class="actions center">
           <a
             class="button button-primary"
             href="https://github.com/Achal13jain/vectormeta#installation"
-            >Install locally</a
+            >Installation guide</a
           >
           <a class="button button-secondary" href="https://github.com/Achal13jain/vectormeta"
             >Open GitHub</a
@@ -237,22 +399,25 @@
     </main>
 
     <footer class="footer">
-      <strong>vectormeta</strong>
+      <strong>// vectormeta 0.1.0</strong>
       <nav aria-label="Footer navigation">
         <a href="https://github.com/Achal13jain/vectormeta/blob/main/docs/architecture.md"
-          >Documentation</a
+          >Architecture</a
         >
         <a href="https://github.com/Achal13jain/vectormeta/blob/main/docs/metadata-reduction.md"
-          >Metadata logic</a
+          >Reduction logic</a
         >
+        <a href="https://github.com/Achal13jain/vectormeta/blob/main/docs/usage.md">Usage</a>
         <a href="https://github.com/Achal13jain/vectormeta/blob/main/CHANGELOG.md">Changelog</a>
       </nav>
-      <span>Released under the MIT License.</span>
+      <span>&copy; 2026 Achal Jain</span>
     </footer>
 
     <script>
       const root = document.documentElement;
       const toggle = document.querySelector(".theme-toggle");
+      const copyButton = document.querySelector(".copy-button");
+
       const setThemeControlState = () => {
         const isDark = root.dataset.theme === "dark";
         toggle.setAttribute("aria-pressed", String(isDark));
@@ -265,6 +430,30 @@
         root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
         localStorage.setItem("vectormeta-theme", root.dataset.theme);
         setThemeControlState();
+      });
+
+      copyButton.addEventListener("click", async () => {
+        const command = 'pip install -e ".[dev]"';
+        const label = copyButton.querySelector("span");
+        try {
+          if (!navigator.clipboard) {
+            throw new Error("Clipboard API unavailable");
+          }
+          await navigator.clipboard.writeText(command);
+        } catch {
+          const fallback = document.createElement("textarea");
+          fallback.value = command;
+          document.body.appendChild(fallback);
+          fallback.select();
+          document.execCommand("copy");
+          fallback.remove();
+        }
+        copyButton.classList.add("copied");
+        label.textContent = "Copied";
+        window.setTimeout(() => {
+          copyButton.classList.remove("copied");
+          label.textContent = "Copy";
+        }, 1400);
       });
     </script>
   </body>
