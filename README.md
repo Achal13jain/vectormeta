@@ -1,11 +1,33 @@
-# vectormeta
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/Achal13jain/vectormeta/main/site/assets/banner.png"
+    alt="vectormeta banner showing oversized vector metadata reduced into clean sidecar references"
+  >
+</p>
 
-[![CI](https://github.com/Achal13jain/vectormeta/actions/workflows/ci.yml/badge.svg)](https://github.com/Achal13jain/vectormeta/actions/workflows/ci.yml)
-[![Pages](https://github.com/Achal13jain/vectormeta/actions/workflows/pages.yml/badge.svg)](https://github.com/Achal13jain/vectormeta/actions/workflows/pages.yml)
+<h1 align="center">vectormeta</h1>
 
-Stop vector DB metadata limit errors before upsert.
+<p align="center">
+  <strong>Stop vector DB metadata limit errors before upsert.</strong>
+</p>
 
-Website: <https://achal13jain.github.io/vectormeta/>
+<p align="center">
+  <a href="https://pypi.org/project/vectormeta/"><img alt="PyPI" src="https://img.shields.io/pypi/v/vectormeta"></a>
+  <a href="https://pypi.org/project/vectormeta/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/vectormeta"></a>
+  <a href="https://github.com/Achal13jain/vectormeta/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Achal13jain/vectormeta/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/Achal13jain/vectormeta/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
+  <a href="https://achal13jain.github.io/vectormeta/"><img alt="Website" src="https://img.shields.io/badge/website-live-2ea44f"></a>
+</p>
+
+<p align="center">
+  <a href="https://achal13jain.github.io/vectormeta/">Website</a>
+  &middot;
+  <a href="https://github.com/Achal13jain/vectormeta/blob/main/docs/usage.md">Usage</a>
+  &middot;
+  <a href="https://github.com/Achal13jain/vectormeta/blob/main/docs/metadata-reduction.md">Reduction logic</a>
+  &middot;
+  <a href="https://pypi.org/project/vectormeta/">PyPI</a>
+</p>
 
 `vectormeta` is a Python CLI package for detecting and fixing oversized metadata in
 vector database records. It scans JSON or JSONL vector records, reports the largest
@@ -16,6 +38,12 @@ The project is designed for developers preparing records for Pinecone, Chroma, Q
 Weaviate, or a custom metadata policy. Pinecone is the clearest strict-limit target in
 the MVP. Other targets use conservative advisory limits that should be adjusted for each
 deployment.
+
+```bash
+vectormeta scan records.json --target pinecone
+vectormeta fix records.json --target pinecone --sidecar ./sidecar --out ready.json
+vectormeta hydrate ready.json --sidecar ./sidecar --out hydrated.json
+```
 
 ## Why This Exists
 
@@ -66,12 +94,10 @@ sidecar JSON file      -> large text, HTML, tables, summaries, payloads
 
 ## Installation
 
-Clone and install locally:
+Install from PyPI:
 
 ```bash
-git clone https://github.com/Achal13jain/vectormeta.git
-cd vectormeta
-pip install -e ".[dev]"
+pip install vectormeta
 ```
 
 Check the CLI:
@@ -79,13 +105,20 @@ Check the CLI:
 ```bash
 vectormeta --help
 vectormeta --version
-python -m vectormeta --help
 ```
 
-After the package is published to PyPI, the intended install command is:
+For local development, clone the repository and install the development extras:
 
 ```bash
-pip install vectormeta
+git clone https://github.com/Achal13jain/vectormeta.git
+cd vectormeta
+pip install -e ".[dev]"
+```
+
+Then verify the module entry point as well:
+
+```bash
+python -m vectormeta --help
 ```
 
 ## Input Format
