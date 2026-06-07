@@ -317,6 +317,8 @@ Expected result:
 - Input support is JSON arrays and JSONL records, but files are currently read into
   memory. Streaming JSONL scan/fix is planned for larger embedding datasets.
 - Vector values are preserved but not deeply validated.
+- Provider-specific metadata schemas and value types are not fully validated. For
+  example, Pinecone has metadata format rules beyond byte size.
 - Non-Pinecone target limits are conservative advisory defaults, not vendor claims.
 - The fixer is policy-based; review cleaned outputs before production ingestion.
 

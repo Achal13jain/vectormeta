@@ -8,6 +8,9 @@ Pinecone is the primary MVP target. This tool uses a 40 KB default metadata limi
 Pinecone scans and fixes. Users should still verify current official Pinecone
 documentation for production systems.
 
+`vectormeta` checks metadata byte size and cleanup policy. It does not fully validate
+Pinecone-specific metadata schemas or value types.
+
 ## Chroma
 
 Chroma is often local or deployment-configurable. `vectormeta` uses an advisory scan
