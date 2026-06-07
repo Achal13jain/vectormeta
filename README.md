@@ -301,22 +301,12 @@ Expected result:
 
 ## Documentation
 
+- [Project website](https://achal13jain.github.io/vectormeta/)
 - [Architecture overview](docs/architecture.md)
 - [Metadata reduction logic](docs/metadata-reduction.md)
 - [Usage guide](docs/usage.md)
 - [Testing checklist](docs/testing.md)
 - [Vector database notes](docs/vector-db-notes.md)
-
-## Static Explainer Page
-
-A lightweight static page is available at:
-
-```text
-site/index.html
-```
-
-Open it in a browser to preview a simple visual explanation of the project. It does not
-require a server or build step.
 
 ## Limitations
 
