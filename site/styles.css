@@ -972,11 +972,23 @@ pre {
   border-top: 1px solid var(--border);
 }
 
-.footer strong {
-  color: var(--text);
+.footer-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--green);
   font-family: var(--mono);
   font-size: 0.86rem;
-  font-weight: 500;
+  font-weight: 700;
+}
+
+.release-icon {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 4px var(--green-soft);
 }
 
 .footer > span {
