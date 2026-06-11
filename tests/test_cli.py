@@ -73,6 +73,58 @@ def test_scan_json_includes_limit_policy_for_advisory_target(tmp_path: Path) -> 
     assert "qdrant limit is advisory" in result.output
 
 
+def test_validate_exits_one_when_errors_are_found(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.json"
+    input_path.write_text(
+        '[{"id":"doc","values":[0.1],"metadata":{"nested":{"page":1}}}]',
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        ["validate", str(input_path), "--target", "pinecone", "--format", "json"],
+    )
+
+    assert result.exit_code == 1
+    assert "invalid_metadata_value" in result.output
+
+
+def test_validate_no_fail_exits_zero_when_errors_are_found(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.json"
+    input_path.write_text(
+        '[{"id":"doc","values":[0.1],"metadata":{"nested":{"page":1}}}]',
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        ["validate", str(input_path), "--target", "pinecone", "--no-fail", "--format", "json"],
+    )
+
+    assert result.exit_code == 0
+    assert "invalid_metadata_value" in result.output
+
+
+def test_validate_json_reports_errors(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.json"
+    input_path.write_text(
+        '[{"id":"doc","values":[0.1,0.2],"metadata":{"source":"paper.pdf"}}]',
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        ["validate", str(input_path), "--target", "pinecone", "--dim", "3", "--format", "json"],
+    )
+
+    assert result.exit_code == 1
+    assert '"error_count": 1' in result.output
+    assert "vector_dimension_mismatch" in result.output
+
+
 def test_fix_prints_advisory_warning_for_non_pinecone_target(tmp_path: Path) -> None:
     input_path = tmp_path / "records.json"
     ready_path = tmp_path / "ready.json"

@@ -8,7 +8,14 @@ from rich.console import Console
 from rich.table import Table
 
 from vectormeta.limits import advisory_limit_message, get_target_limit, get_target_limits
-from vectormeta.models import FixResult, RecordAnalysis, ScanReport
+from vectormeta.models import (
+    FixResult,
+    RecordAnalysis,
+    RecordValidation,
+    ScanReport,
+    ValidationIssue,
+    ValidationReport,
+)
 
 
 def bytes_to_kb(size_bytes: int) -> float:
@@ -32,6 +39,27 @@ def scan_report_to_dict(report: ScanReport, *, top: int) -> dict[str, Any]:
         "oversized_records": [
             _record_analysis_to_dict(record) for record in report.oversized_records[:top]
         ],
+    }
+
+
+def validation_report_to_dict(report: ValidationReport, *, top: int) -> dict[str, Any]:
+    """Convert a validation report to stable JSON-serializable data."""
+    target_limit = get_target_limit(report.target)
+    advisory_message = advisory_limit_message(report.target, report.limit_bytes)
+    return {
+        "target": report.target,
+        "limit_bytes": report.limit_bytes,
+        "limit_kb": round(bytes_to_kb(report.limit_bytes), 3),
+        "limit_policy": target_limit.policy,
+        "limit_note": target_limit.note,
+        "limit_warning": advisory_message,
+        "expected_dim": report.expected_dim,
+        "total_records": report.total_records,
+        "error_count": report.error_count,
+        "warning_count": report.warning_count,
+        "has_errors": report.has_errors,
+        "top_issues": [_validation_issue_to_dict(issue) for issue in report.issues[:top]],
+        "records": [_record_validation_to_dict(record) for record in report.records],
     }
 
 
@@ -78,6 +106,47 @@ def render_scan_report(console: Console, report: ScanReport, *, top: int) -> Non
         console.print(table)
     else:
         console.print("[green]All records are within the configured metadata limit.[/green]")
+
+
+def render_validation_report(console: Console, report: ValidationReport, *, top: int) -> None:
+    """Render a human-readable preflight validation report."""
+    console.print(f"[bold]Target:[/bold] {report.target}")
+    console.print(
+        f"[bold]Metadata limit:[/bold] {report.limit_bytes} bytes "
+        f"({bytes_to_kb(report.limit_bytes):.2f} KB)"
+    )
+    render_limit_warning(console, target=report.target, limit_bytes=report.limit_bytes)
+    if report.expected_dim is not None:
+        console.print(f"[bold]Expected vector dimension:[/bold] {report.expected_dim}")
+    console.print(f"[bold]Records validated:[/bold] {report.total_records}")
+    error_color = "red" if report.error_count else "green"
+    warning_color = "yellow" if report.warning_count else "green"
+    console.print(f"[bold]Errors:[/bold] [{error_color}]{report.error_count}[/{error_color}]")
+    console.print(
+        f"[bold]Warnings:[/bold] [{warning_color}]{report.warning_count}[/{warning_color}]"
+    )
+
+    if not report.issues:
+        console.print("[green]No validation issues found.[/green]")
+        return
+
+    table = Table(title=f"Top {top} Validation Issues")
+    table.add_column("Severity", no_wrap=True)
+    table.add_column("Code", no_wrap=True)
+    table.add_column("Record ID", overflow="fold")
+    table.add_column("Field", overflow="fold", no_wrap=True)
+    table.add_column("Message", overflow="fold")
+
+    for issue in report.issues[:top]:
+        severity_style = "red" if issue.severity == "error" else "yellow"
+        table.add_row(
+            f"[{severity_style}]{issue.severity}[/{severity_style}]",
+            issue.code,
+            issue.record_id,
+            issue.field_path or "-",
+            issue.message,
+        )
+    console.print(table)
 
 
 def render_fix_summary(console: Console, result: FixResult, *, dry_run: bool) -> None:
@@ -131,4 +200,28 @@ def _record_analysis_to_dict(record: RecordAnalysis) -> dict[str, Any]:
             for field in record.largest_fields
         ],
         "suggested_move_fields": [field.field_name for field in record.largest_fields[:3]],
+    }
+
+
+def _record_validation_to_dict(record: RecordValidation) -> dict[str, Any]:
+    return {
+        "id": record.record_id,
+        "metadata_size_bytes": record.metadata_size_bytes,
+        "metadata_size_kb": round(record.metadata_size_kb, 3),
+        "over_limit_by_bytes": record.over_limit_by_bytes,
+        "vector_dimension": record.vector_dimension,
+        "error_count": record.error_count,
+        "warning_count": record.warning_count,
+        "has_errors": record.has_errors,
+        "issues": [_validation_issue_to_dict(issue) for issue in record.issues],
+    }
+
+
+def _validation_issue_to_dict(issue: ValidationIssue) -> dict[str, Any]:
+    return {
+        "record_id": issue.record_id,
+        "severity": issue.severity,
+        "code": issue.code,
+        "field_path": issue.field_path,
+        "message": issue.message,
     }

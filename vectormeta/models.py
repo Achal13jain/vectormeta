@@ -13,6 +13,7 @@ OutputFormat = Literal["json", "jsonl"]
 ReportFormat = Literal["table", "json"]
 HydrateMode = Literal["metadata", "content_field"]
 LimitPolicy = Literal["strict", "advisory", "custom"]
+ValidationSeverity = Literal["error", "warning"]
 
 
 @dataclass(frozen=True)
@@ -79,6 +80,108 @@ class ScanReport:
             key=lambda record: record.metadata_size_bytes,
             reverse=True,
         )
+
+
+@dataclass(frozen=True)
+class ValidationIssue:
+    """One issue found during preflight validation."""
+
+    record_id: str
+    severity: ValidationSeverity
+    code: str
+    message: str
+    field_path: str | None = None
+
+
+@dataclass(frozen=True)
+class RecordValidation:
+    """Validation result for one vector record."""
+
+    record_id: str
+    metadata_size_bytes: int
+    limit_bytes: int
+    vector_dimension: int | None
+    issues: list[ValidationIssue]
+
+    @property
+    def metadata_size_kb(self) -> float:
+        """Return the metadata size in kibibytes."""
+        return self.metadata_size_bytes / 1024
+
+    @property
+    def over_limit_by_bytes(self) -> int:
+        """Return the number of bytes over the configured metadata limit."""
+        return max(0, self.metadata_size_bytes - self.limit_bytes)
+
+    @property
+    def has_errors(self) -> bool:
+        """Return whether this record has error-level validation issues."""
+        return any(issue.severity == "error" for issue in self.issues)
+
+    @property
+    def error_count(self) -> int:
+        """Return the number of error-level issues."""
+        return sum(issue.severity == "error" for issue in self.issues)
+
+    @property
+    def warning_count(self) -> int:
+        """Return the number of warning-level issues."""
+        return sum(issue.severity == "warning" for issue in self.issues)
+
+    @property
+    def is_oversized(self) -> bool:
+        """Return whether metadata exceeds the configured limit."""
+        return self.over_limit_by_bytes > 0
+
+
+@dataclass(frozen=True)
+class ValidationReport:
+    """Aggregate preflight validation result."""
+
+    target: str
+    limit_bytes: int
+    expected_dim: int | None
+    records: list[RecordValidation]
+
+    @property
+    def total_records(self) -> int:
+        """Return the total number of records validated."""
+        return len(self.records)
+
+    @property
+    def issues(self) -> list[ValidationIssue]:
+        """Return all validation issues in record order."""
+        return [issue for record in self.records for issue in record.issues]
+
+    @property
+    def errors(self) -> list[ValidationIssue]:
+        """Return all error-level validation issues."""
+        return [issue for issue in self.issues if issue.severity == "error"]
+
+    @property
+    def warnings(self) -> list[ValidationIssue]:
+        """Return all warning-level validation issues."""
+        return [issue for issue in self.issues if issue.severity == "warning"]
+
+    @property
+    def error_count(self) -> int:
+        """Return the total number of error-level issues."""
+        return len(self.errors)
+
+    @property
+    def warning_count(self) -> int:
+        """Return the total number of warning-level issues."""
+        return len(self.warnings)
+
+    @property
+    def has_errors(self) -> bool:
+        """Return whether any record has error-level validation issues."""
+        return bool(self.errors)
+
+    @property
+    def records_with_errors(self) -> list[RecordValidation]:
+        """Return records with error-level issues in input order."""
+        return [record for record in self.records if record.has_errors]
 
 
 @dataclass(frozen=True)

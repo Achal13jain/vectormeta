@@ -24,8 +24,11 @@ from vectormeta.reporting import (
     render_limit_warning,
     render_limits,
     render_scan_report,
+    render_validation_report,
     scan_report_to_dict,
+    validation_report_to_dict,
 )
+from vectormeta.validator import validate_records
 
 app = typer.Typer(help="Detect and fix oversized vector database metadata.")
 console = Console()
@@ -122,6 +125,51 @@ def scan(
             render_scan_report(console, report, top=top)
 
         if report.oversized_count and not no_fail:
+            raise typer.Exit(1)
+    except VectorMetaError as exc:
+        _print_error(exc)
+        raise typer.Exit(2) from exc
+
+
+@app.command()
+def validate(
+    input_path: Annotated[Path, typer.Argument(help="JSON or JSONL vector records file.")],
+    target: TargetOption = "pinecone",
+    limit_kb: LimitOption = None,
+    dim: Annotated[
+        int | None,
+        typer.Option("--dim", min=1, help="Expected vector dimension for every record."),
+    ] = None,
+    top: Annotated[
+        int, typer.Option("--top", min=1, help="Number of validation issues to show.")
+    ] = 20,
+    output_format: Annotated[
+        ScanFormat,
+        typer.Option("--format", help="Output format: table or json."),
+    ] = ScanFormat.table,
+    no_fail: Annotated[
+        bool,
+        typer.Option("--no-fail", help="Exit 0 even when validation errors are found."),
+    ] = False,
+) -> None:
+    """Validate records for common vector DB upsert failures."""
+    try:
+        normalized_target = normalize_target(target)
+        limit_bytes = resolve_limit_bytes(normalized_target, limit_kb)
+        records, _ = read_records(input_path)
+        report = validate_records(records, normalized_target, limit_bytes, dim=dim)
+        if output_format == ScanFormat.json:
+            console.print_json(
+                json.dumps(
+                    validation_report_to_dict(report, top=top),
+                    ensure_ascii=False,
+                    sort_keys=True,
+                )
+            )
+        elif output_format == ScanFormat.table:
+            render_validation_report(console, report, top=top)
+
+        if report.has_errors and not no_fail:
             raise typer.Exit(1)
     except VectorMetaError as exc:
         _print_error(exc)

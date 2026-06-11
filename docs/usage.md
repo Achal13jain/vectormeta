@@ -20,6 +20,32 @@ Use a custom limit:
 vectormeta scan chunks.json --target custom --limit-kb 32
 ```
 
+## Validate
+
+```bash
+vectormeta validate chunks.json --target pinecone --dim 1536
+```
+
+`validate` runs a preflight check for common upsert failures:
+
+- metadata byte size
+- missing, empty, or duplicate record IDs
+- vector dimension consistency
+- optional vector dimension match with `--dim`
+- Pinecone metadata value shapes, including flat metadata and no `null` values
+
+Use JSON output in CI:
+
+```bash
+vectormeta validate chunks.json --target pinecone --dim 1536 --format json
+```
+
+Exit codes:
+
+- `0`: no error-level validation issues, or `--no-fail` was passed
+- `1`: one or more error-level validation issues were found
+- `2`: expected user-facing input, config, or target error
+
 ## Fix
 
 ```bash

@@ -44,6 +44,27 @@ simple for an MVP.
 7. Mark records as oversized when `metadata_size_bytes > limit_bytes`.
 8. Render table output or stable JSON output.
 
+## Validate Logic
+
+`vectormeta validate` performs preflight checks for common upsert failures:
+
+1. Read records from JSON or JSONL.
+2. Resolve the target metadata limit.
+3. Measure metadata with the same compact UTF-8 JSON byte sizing used by `scan`.
+4. Report error-level issues for oversized metadata.
+5. Report missing, empty, or duplicate `id` / `_id` values.
+6. Check that vectors in `values`, `vector`, or `embedding` are non-empty finite numeric
+   sequences.
+7. Check that all vectors share the same dimension.
+8. If `--dim` is provided, check that every vector matches that dimension.
+9. For Pinecone, check documented metadata value rules: flat metadata, string keys, no
+   keys starting with `$`, and values limited to strings, finite numbers, booleans, or
+   lists of strings.
+10. Render table output or stable JSON output.
+
+Validation returns structured issues with `error` or `warning` severity. Error-level
+issues make the CLI exit `1`, unless `--no-fail` is passed.
+
 ## Fix Logic
 
 `vectormeta fix` performs this flow for each record:
@@ -142,6 +163,10 @@ The test suite covers:
 - Rejection of sidecar references outside allowed paths.
 - CLI scan exit codes.
 - CLI fix and hydrate round trip.
+- Validation of Pinecone metadata value rules.
+- Validation of duplicate/missing IDs.
+- Validation of vector dimensions and invalid vector values.
+- CLI validate exit codes and JSON output.
 
 The local acceptance workflow also verifies that the included oversized example becomes
 small enough after fixing:
