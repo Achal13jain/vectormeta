@@ -6,7 +6,7 @@
     <title>vectormeta | Stop vector DB metadata limit errors</title>
     <meta
       name="description"
-      content="vectormeta scans vector records, finds oversized metadata, and moves heavy fields into sidecar JSON files before vector database upsert."
+      content="vectormeta scans and validates vector records, finds oversized metadata, and moves heavy fields into sidecar JSON files before vector database upsert."
     />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -92,14 +92,14 @@
     <main id="top">
       <section class="hero section-band">
         <div class="hero-copy">
-          <p class="version-pill"><span></span> v0.1.0 - MIT License</p>
+          <p class="version-pill"><span></span> v0.2.0 - MIT License</p>
           <h1>
             Stop vector DB metadata
             <span class="accent-text">limit errors</span> before upsert.
           </h1>
           <p class="lede">
-            Scan JSON/JSONL records, detect oversized fields, and move heavy payloads to
-            sidecar files while keeping vector metadata small and filterable for your
+            Scan JSON/JSONL records, validate upsert readiness, and move heavy payloads
+            to sidecar files while keeping vector metadata small and filterable for your
             upload pipeline.
           </p>
           <div class="actions center">
@@ -113,7 +113,7 @@
             <span class="dot red"></span>
             <span class="dot amber"></span>
             <span class="dot green"></span>
-            <span>vectormeta - scan + fix + hydrate</span>
+            <span>vectormeta - scan + validate + fix + hydrate</span>
           </div>
           <div class="terminal-body">
             <p><span class="prompt">$</span> vectormeta scan records.json --target pinecone</p>
@@ -122,10 +122,13 @@
             <p class="muted indent">
               doc_123_chunk_4 -> 76,747 B; largest fields: chunk_text, raw_html, summary
             </p>
+            <p class="gap"><span class="prompt">$</span> vectormeta validate records.json --target pinecone --dim 1536</p>
+            <p class="muted">Records validated: 2  /  <span class="danger">Errors: 1</span></p>
+            <p class="muted indent">metadata_too_large -> doc_123_chunk_4</p>
             <p class="gap"><span class="prompt">$</span> vectormeta fix records.json --target pinecone --sidecar ./sidecar --out ready.json</p>
             <p class="success">Fix summary: updated 2 records; 2 records have sidecar payloads.</p>
-            <p class="gap"><span class="prompt">$</span> vectormeta scan ready.json --target pinecone</p>
-            <p class="success">All records are within the configured metadata limit.<span class="cursor"></span></p>
+            <p class="gap"><span class="prompt">$</span> vectormeta validate ready.json --target pinecone --dim 1536</p>
+            <p class="success">No validation issues found.<span class="cursor"></span></p>
           </div>
         </div>
       </section>
@@ -194,8 +197,11 @@
       <section id="workflow" class="section-band workflow-band">
         <div class="section-heading">
           <p class="eyebrow">Workflow</p>
-          <h2>Three commands. No blind truncation.</h2>
-          <p>Use it locally before upsert, or wire it into CI as a metadata hygiene gate.</p>
+          <h2>Four commands. No blind truncation.</h2>
+          <p>
+            Use it locally before upsert, or wire it into CI as a validation and metadata
+            hygiene gate.
+          </p>
         </div>
 
         <div class="workflow-grid">
@@ -209,7 +215,16 @@
             <code><span>$</span> vectormeta scan records.json --target pinecone</code>
           </article>
           <article class="step-card">
-            <span class="step-index">02 / FIX</span>
+            <span class="step-index">02 / VALIDATE</span>
+            <h3>Catch upsert failures</h3>
+            <p>
+              Check metadata size, ID hygiene, Pinecone metadata value rules, and vector
+              dimension consistency before upload.
+            </p>
+            <code><span>$</span> vectormeta validate records.json --target pinecone --dim 1536</code>
+          </article>
+          <article class="step-card">
+            <span class="step-index">03 / FIX</span>
             <h3>Move heavy fields</h3>
             <p>
               Move text, HTML, summaries, tables, and OCR payloads into sidecars while
@@ -218,7 +233,7 @@
             <code><span>$</span> vectormeta fix records.json --sidecar ./sidecar --out ready.json</code>
           </article>
           <article class="step-card">
-            <span class="step-index">03 / HYDRATE</span>
+            <span class="step-index">04 / HYDRATE</span>
             <h3>Restore for inspection</h3>
             <p>
               Load content_ref sidecars back into records for debugging, migration work,
@@ -352,6 +367,7 @@
           <span>Typer CLI</span>
           <span>Rich output</span>
           <span>Pydantic config</span>
+          <span>Preflight validation</span>
           <span>JSON + JSONL</span>
           <span>Pytest tests</span>
           <span>Ruff linting</span>
@@ -365,7 +381,7 @@
 
       <section class="cta">
         <h2>Use vectormeta before your next vector DB upsert.</h2>
-        <p>Install from PyPI, scan your records, and catch oversized metadata early.</p>
+        <p>Install from PyPI, scan and validate your records, and catch metadata issues early.</p>
         <div class="install-command">
           <code><span>$</span> pip install vectormeta</code>
           <button type="button" class="copy-button" aria-label="Copy install command">
@@ -412,7 +428,7 @@
     <footer class="footer">
       <strong class="footer-version">
         <span class="release-icon" aria-hidden="true"></span>
-        vectormeta 0.1.0
+        vectormeta 0.2.0
       </strong>
       <nav aria-label="Footer navigation">
         <a href="https://github.com/Achal13jain/vectormeta/blob/main/docs/architecture.md"

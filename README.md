@@ -29,10 +29,11 @@
   <a href="https://pypi.org/project/vectormeta/">PyPI</a>
 </p>
 
-`vectormeta` is a Python CLI package for detecting and fixing oversized metadata in
-vector database records. It scans JSON or JSONL vector records, reports the largest
-metadata fields, and can move heavy content fields into local JSON sidecar files while
-leaving clean filterable metadata in the vector database payload.
+`vectormeta` is a Python CLI package for detecting, validating, and fixing problematic
+metadata in vector database records. It scans JSON or JSONL vector records, reports the
+largest metadata fields, validates common upsert-failure cases, and can move heavy
+content fields into local JSON sidecar files while leaving clean filterable metadata in
+the vector database payload.
 
 The project is designed for developers preparing records for Pinecone, Chroma, Qdrant,
 Weaviate, or a custom metadata policy. Pinecone is the clearest strict-limit target in
@@ -75,7 +76,8 @@ sidecar JSON file      -> large text, HTML, tables, summaries, payloads
 - Report oversized records, largest fields, byte counts, KB counts, and suggested moves.
 - Exit with code `1` when oversized records are found, which makes scans useful in CI.
 - Validate records for common upsert failures before upload.
-- Check Pinecone metadata value shapes, duplicate IDs, missing IDs, and vector dimensions.
+- Check Pinecone metadata value shapes, duplicate IDs, missing IDs, vector shape, and
+  vector dimensions.
 - Move heavy metadata fields into sidecar JSON files.
 - Preserve unknown record fields and original record order.
 - Sanitize sidecar filenames derived from record IDs.
@@ -186,6 +188,7 @@ Verify the cleaned file now fits the Pinecone-sized policy:
 
 ```bash
 vectormeta scan examples/pinecone_ready.json --target pinecone --no-fail
+vectormeta validate examples/pinecone_ready.json --target pinecone --no-fail
 ```
 
 Hydrate records for local inspection:
@@ -377,8 +380,8 @@ vectormeta hydrate examples/pinecone_ready.json --sidecar examples/sidecar --out
 
 Expected result:
 
-- The original example reports one oversized record.
-- The fixed output reports zero oversized records.
+- The original example reports one oversized record and one validation error.
+- The fixed output reports zero oversized records and zero validation errors.
 - Sidecar files are created under `examples/sidecar`.
 - Hydration restores moved fields for inspection.
 

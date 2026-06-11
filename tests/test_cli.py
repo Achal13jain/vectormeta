@@ -30,7 +30,7 @@ def test_version_option() -> None:
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert "vectormeta 0.1.0" in result.output
+    assert "vectormeta 0.2.0" in result.output
 
 
 def test_scan_no_fail_exits_zero_when_oversized(tmp_path: Path) -> None:
