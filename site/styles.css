@@ -670,7 +670,7 @@ pre {
 
 .workflow-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -703,10 +703,14 @@ pre {
 }
 
 .step-card:nth-child(2)::before {
-  background: var(--amber);
+  background: var(--green);
 }
 
 .step-card:nth-child(3)::before {
+  background: var(--amber);
+}
+
+.step-card:nth-child(4)::before {
   background: var(--green);
 }
 
