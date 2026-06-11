@@ -41,6 +41,7 @@ deployment.
 
 ```bash
 vectormeta scan records.json --target pinecone
+vectormeta validate records.json --target pinecone --dim 1536
 vectormeta fix records.json --target pinecone --sidecar ./sidecar --out ready.json
 vectormeta hydrate ready.json --sidecar ./sidecar --out hydrated.json
 ```
@@ -73,6 +74,8 @@ sidecar JSON file      -> large text, HTML, tables, summaries, payloads
 - Measure metadata using compact UTF-8 JSON bytes.
 - Report oversized records, largest fields, byte counts, KB counts, and suggested moves.
 - Exit with code `1` when oversized records are found, which makes scans useful in CI.
+- Validate records for common upsert failures before upload.
+- Check Pinecone metadata value shapes, duplicate IDs, missing IDs, and vector dimensions.
 - Move heavy metadata fields into sidecar JSON files.
 - Preserve unknown record fields and original record order.
 - Sanitize sidecar filenames derived from record IDs.
@@ -151,8 +154,9 @@ Each record must contain:
 - `id` or `_id`
 - `metadata` as a JSON object
 
-Vector fields such as `values`, `vector`, or `embedding` are preserved but not deeply
-validated by the MVP.
+Vector fields such as `values`, `vector`, or `embedding` are preserved by scan/fix
+workflows. The `validate` command can check that vectors are finite numeric lists and
+that dimensions are consistent.
 
 ## Quickstart
 
@@ -160,6 +164,12 @@ Scan the included oversized Pinecone example:
 
 ```bash
 vectormeta scan examples/oversized_pinecone_records.json --target pinecone --no-fail
+```
+
+Run a preflight validation pass:
+
+```bash
+vectormeta validate examples/oversized_pinecone_records.json --target pinecone --no-fail
 ```
 
 Fix the records:
@@ -207,6 +217,34 @@ Exit codes:
 
 - `0`: all records fit, or `--no-fail` was passed
 - `1`: oversized records were found
+- `2`: expected user-facing input, config, target, or overwrite error
+
+### Validate
+
+```bash
+vectormeta validate chunks.json --target pinecone --dim 1536
+```
+
+`validate` checks metadata size, ID hygiene, duplicate IDs, vector shape, vector
+dimension consistency, and optional dimension matching with `--dim`.
+
+For Pinecone, it also checks metadata format rules documented by Pinecone: flat metadata
+objects, string keys that do not start with `$`, and values that are strings, finite
+numbers, booleans, or lists of strings.
+
+Useful options:
+
+- `--target pinecone|chroma|qdrant|weaviate|custom`
+- `--limit-kb <number>` for custom or overridden limits
+- `--dim <number>` for the expected vector dimension
+- `--top <number>` for validation issues to show
+- `--format table|json`
+- `--no-fail` to exit `0` even when error-level issues are found
+
+Exit codes:
+
+- `0`: no error-level validation issues, or `--no-fail` was passed
+- `1`: one or more error-level validation issues were found
 - `2`: expected user-facing input, config, target, or overwrite error
 
 ### Fix
@@ -304,6 +342,16 @@ The logic is covered by tests for Unicode byte sizing, nested metadata sizing,
 JSON/JSONL input, fixer output, sidecar overwrite protection, hydration, and CLI exit
 codes. See [docs/metadata-reduction.md](docs/metadata-reduction.md).
 
+## Preflight Validation
+
+`vectormeta validate` is a linter for vector records before upsert. It reuses the same
+compact UTF-8 JSON byte sizing as `scan`, then adds checks for IDs, duplicate IDs, vector
+dimensions, invalid vector values, and Pinecone metadata value types.
+
+For non-Pinecone targets, size presets remain advisory and provider-specific metadata
+schema validation is intentionally limited. Use `--limit-kb` and `--dim` to match your
+deployment policy.
+
 ## Local Verification
 
 Run the same checks used in CI:
@@ -320,8 +368,10 @@ Run the acceptance workflow:
 
 ```bash
 vectormeta scan examples/oversized_pinecone_records.json --target pinecone --no-fail
+vectormeta validate examples/oversized_pinecone_records.json --target pinecone --no-fail
 vectormeta fix examples/oversized_pinecone_records.json --target pinecone --sidecar examples/sidecar --out examples/pinecone_ready.json --overwrite
 vectormeta scan examples/pinecone_ready.json --target pinecone --no-fail
+vectormeta validate examples/pinecone_ready.json --target pinecone --no-fail
 vectormeta hydrate examples/pinecone_ready.json --sidecar examples/sidecar --out examples/hydrated.json --overwrite
 ```
 
@@ -349,9 +399,9 @@ Expected result:
   such as shared `raw_html` across chunks from the same document.
 - Input support is JSON arrays and JSONL records, but files are currently read into
   memory. Streaming JSONL scan/fix is planned for larger embedding datasets.
-- Vector values are preserved but not deeply validated.
-- Provider-specific metadata schemas and value types are not fully validated. For
-  example, Pinecone has metadata format rules beyond byte size.
+- Vector validation covers dense numeric vector lists and dimensions. It does not infer
+  index configuration unless you provide `--dim`.
+- Provider-specific metadata schema validation is currently strictest for Pinecone.
 - Non-Pinecone target limits are conservative advisory defaults, not vendor claims.
 - The fixer is policy-based; review cleaned outputs before production ingestion.
 
@@ -362,6 +412,7 @@ Planned ideas include:
 - SQLite sidecar backend
 - Content-addressed sidecar deduplication
 - Streaming JSONL scan/fix
+- More provider-specific validation rules
 - S3 sidecar backend
 - LangChain `Document` adapter
 - LlamaIndex `Node` adapter

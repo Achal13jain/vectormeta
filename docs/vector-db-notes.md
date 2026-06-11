@@ -8,8 +8,18 @@ Pinecone is the primary MVP target. This tool uses a 40 KB default metadata limi
 Pinecone scans and fixes. Users should still verify current official Pinecone
 documentation for production systems.
 
-`vectormeta` checks metadata byte size and cleanup policy. It does not fully validate
-Pinecone-specific metadata schemas or value types.
+`vectormeta validate --target pinecone` checks the Pinecone metadata format rules
+documented in Pinecone's indexing overview:
+
+- metadata must be a flat JSON object
+- keys must be strings and must not start with `$`
+- values must be strings, finite numbers, booleans, or lists of strings
+- `null` metadata values are not supported
+
+Source: <https://docs.pinecone.io/guides/index-data/indexing-overview>
+
+`vectormeta` also checks record ID hygiene and vector dimension consistency. It does not
+replace a real upsert against your Pinecone index, and provider behavior can change.
 
 ## Chroma
 

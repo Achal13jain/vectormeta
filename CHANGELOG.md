@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Added `vectormeta validate` for preflight record checks before vector database upsert.
+- Added `validate_records()` as a reusable Python API.
+- Added validation reports with error and warning severity.
+- Added checks for metadata size, missing IDs, duplicate IDs, vector shape, vector
+  dimension consistency, optional `--dim` matching, and Pinecone metadata value rules.
+
 ## 0.1.0 - 2026-06-07
 
 Initial public MVP release.
