@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from types import ModuleType
+from unittest.mock import Mock, patch
 
 import yaml
 
@@ -82,6 +84,70 @@ def test_action_runner_rejects_invalid_mode() -> None:
         assert "mode" in str(exc)
     else:
         raise AssertionError("Expected invalid mode to raise ValueError.")
+
+
+def test_action_runner_rejects_invalid_boolean() -> None:
+    runner = _load_runner()
+
+    try:
+        runner.config_from_env({"INPUT_INPUT": "records.json", "INPUT_STREAM": "sometimes"})
+    except ValueError as exc:
+        assert "stream" in str(exc)
+        assert "boolean" in str(exc)
+    else:
+        raise AssertionError("Expected invalid boolean to raise ValueError.")
+
+
+def test_action_runner_fails_when_validation_reports_warnings() -> None:
+    runner = _load_runner()
+    config = runner.ActionConfig(
+        input_path="records.json",
+        target="pinecone",
+        mode="validate",
+        limit_kb=None,
+        dim=None,
+        top="5",
+        output_format="table",
+        stream=False,
+        fail_on_warning=True,
+        no_fail=False,
+    )
+    completed = Mock(
+        returncode=0,
+        stdout=json.dumps({"error_count": 0, "warning_count": 1}),
+        stderr="",
+    )
+
+    with patch.object(runner.subprocess, "run", return_value=completed):
+        exit_code = runner.run(config)
+
+    assert exit_code == 1
+
+
+def test_action_runner_passes_clean_validation_report() -> None:
+    runner = _load_runner()
+    config = runner.ActionConfig(
+        input_path="records.json",
+        target="pinecone",
+        mode="validate",
+        limit_kb=None,
+        dim=None,
+        top="5",
+        output_format="table",
+        stream=False,
+        fail_on_warning=True,
+        no_fail=False,
+    )
+    completed = Mock(
+        returncode=0,
+        stdout=json.dumps({"error_count": 0, "warning_count": 0}),
+        stderr="",
+    )
+
+    with patch.object(runner.subprocess, "run", return_value=completed):
+        exit_code = runner.run(config)
+
+    assert exit_code == 0
 
 
 def _load_runner() -> ModuleType:

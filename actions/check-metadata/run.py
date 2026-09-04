@@ -46,9 +46,9 @@ def config_from_env(env: dict[str, str]) -> ActionConfig:
         dim=_optional(env.get("INPUT_DIM", "")),
         top=env.get("INPUT_TOP", "20").strip() or "20",
         output_format=output_format,
-        stream=_bool(env.get("INPUT_STREAM", "false")),
-        fail_on_warning=_bool(env.get("INPUT_FAIL_ON_WARNING", "false")),
-        no_fail=_bool(env.get("INPUT_NO_FAIL", "false")),
+        stream=_bool(env.get("INPUT_STREAM", "false"), "stream"),
+        fail_on_warning=_bool(env.get("INPUT_FAIL_ON_WARNING", "false"), "fail-on-warning"),
+        no_fail=_bool(env.get("INPUT_NO_FAIL", "false"), "no-fail"),
     )
 
 
@@ -149,8 +149,16 @@ def _optional(value: str | None) -> str | None:
     return stripped or None
 
 
-def _bool(value: str) -> bool:
-    return value.strip().lower() in {"1", "true", "yes", "on"}
+def _bool(value: str, input_name: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off", ""}:
+        return False
+    raise ValueError(
+        f"The '{input_name}' action input must be a boolean "
+        "(true, false, 1, 0, yes, no, on, or off)."
+    )
 
 
 def _captures_output(config: ActionConfig, command: list[str]) -> bool:

@@ -65,5 +65,9 @@ The Action uses the packaged vectormeta CLI:
 - `fail-on-warning: "true"` makes validation fail on warning-level issues too.
 - input, target, or configuration errors fail with exit code `2`.
 
+When both `fail-on-warning` and `no-fail` are enabled, `fail-on-warning` takes
+precedence for validation warnings and errors. Invalid boolean input values are rejected
+instead of being treated as `false`.
+
 For non-Pinecone targets, vectormeta uses advisory limit presets. Verify provider
 configuration and official service documentation for production limits.

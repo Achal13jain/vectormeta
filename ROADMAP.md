@@ -1,6 +1,6 @@
 # Roadmap
 
-Planned ideas after v0.3.0:
+Planned ideas beyond the current release:
 
 - S3 sidecar backend.
 - LangChain `Document` adapter.
