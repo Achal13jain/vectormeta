@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Added a reusable GitHub Action under `actions/check-metadata` for running vectormeta
+  scan and validation checks in pull request workflows.
+- Added GitHub Action documentation with JSONL streaming examples and input reference.
+
 ## 0.4.0 - 2026-08-09
 
 ### Added

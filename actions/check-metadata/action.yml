@@ -1,0 +1,75 @@
+name: "vectormeta metadata check"
+description: "Scan and validate vector database metadata before upsert."
+author: "Achal Jain"
+
+branding:
+  icon: "check-circle"
+  color: "blue"
+
+inputs:
+  input:
+    description: "Path to a JSON or JSONL vector records file."
+    required: true
+  target:
+    description: "Target vector DB: pinecone, chroma, qdrant, weaviate, or custom."
+    required: false
+    default: "pinecone"
+  mode:
+    description: "Check mode: scan, validate, or both."
+    required: false
+    default: "validate"
+  limit-kb:
+    description: "Override metadata size limit in KB. Required for target=custom."
+    required: false
+    default: ""
+  dim:
+    description: "Expected vector dimension for validation."
+    required: false
+    default: ""
+  top:
+    description: "Number of oversized records or validation issues to display."
+    required: false
+    default: "20"
+  format:
+    description: "Output format passed to vectormeta: table or json."
+    required: false
+    default: "table"
+  stream:
+    description: "Use streaming JSONL mode."
+    required: false
+    default: "false"
+  fail-on-warning:
+    description: "Fail validation when warning-level issues are found."
+    required: false
+    default: "false"
+  no-fail:
+    description: "Report issues but do not fail the workflow."
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+
+    - name: Install vectormeta
+      shell: bash
+      run: python -m pip install "$GITHUB_ACTION_PATH/../.."
+
+    - name: Run vectormeta checks
+      shell: bash
+      env:
+        INPUT_INPUT: ${{ inputs.input }}
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_MODE: ${{ inputs.mode }}
+        INPUT_LIMIT_KB: ${{ inputs.limit-kb }}
+        INPUT_DIM: ${{ inputs.dim }}
+        INPUT_TOP: ${{ inputs.top }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_STREAM: ${{ inputs.stream }}
+        INPUT_FAIL_ON_WARNING: ${{ inputs.fail-on-warning }}
+        INPUT_NO_FAIL: ${{ inputs.no-fail }}
+      run: python "$GITHUB_ACTION_PATH/run.py"

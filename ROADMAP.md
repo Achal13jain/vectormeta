@@ -5,7 +5,6 @@ Planned ideas after v0.3.0:
 - S3 sidecar backend.
 - LangChain `Document` adapter.
 - LlamaIndex `Node` adapter.
-- GitHub Action for metadata checks.
 - Pre-commit hook for local metadata checks.
 - HTML report output.
 - More target-specific policy presets with official-doc references.

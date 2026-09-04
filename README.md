@@ -524,8 +524,36 @@ Expected result:
 - [Architecture overview](docs/architecture.md)
 - [Metadata reduction logic](docs/metadata-reduction.md)
 - [Usage guide](docs/usage.md)
+- [GitHub Action](docs/github-action.md)
 - [Testing checklist](docs/testing.md)
 - [Vector database notes](docs/vector-db-notes.md)
+
+## GitHub Action
+
+Run vectormeta in pull request CI:
+
+```yaml
+name: Vector metadata check
+
+on:
+  pull_request:
+
+jobs:
+  vectormeta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Achal13jain/vectormeta/actions/check-metadata@v0.5.0
+        with:
+          input: data/chunks.jsonl
+          target: pinecone
+          mode: both
+          stream: "true"
+          dim: "1536"
+          fail-on-warning: "true"
+```
+
+See [docs/github-action.md](docs/github-action.md) for all inputs.
 
 ## Limitations
 
@@ -550,7 +578,7 @@ Planned ideas include:
 - S3 sidecar backend
 - LangChain `Document` adapter
 - LlamaIndex `Node` adapter
-- GitHub Action for metadata checks
+- pre-commit hook for local metadata checks
 - HTML report output
 
 See [ROADMAP.md](ROADMAP.md).
