@@ -526,6 +526,7 @@ Expected result:
 - [Usage guide](docs/usage.md)
 - [Testing checklist](docs/testing.md)
 - [Vector database notes](docs/vector-db-notes.md)
+- [Troubleshooting guide](docs/troubleshooting.md)
 
 ## Limitations
 
