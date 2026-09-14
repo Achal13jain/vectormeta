@@ -86,6 +86,7 @@ sidecar JSON file      -> large text, HTML, tables, summaries, payloads
 - Use `safe_upsert()` from Python to validate, fix, persist sidecars, and call an
   injected vector index client.
 - Store sidecar payloads in content-addressed local files or SQLite.
+- Run scan and validation checks in pull requests with the reusable GitHub Action.
 - Keep core logic independent from Typer and Rich so it can be tested and reused.
 
 ## Tech Stack
