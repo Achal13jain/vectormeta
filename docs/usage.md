@@ -242,3 +242,8 @@ Run:
 ```bash
 vectormeta fix chunks.json --config vectormeta.yml --out pinecone_ready.json
 ```
+
+## Troubleshooting
+
+For common CLI errors, format validation failures, and resolution steps, see the [Troubleshooting Guide](troubleshooting.md).
+
