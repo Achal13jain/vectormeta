@@ -117,6 +117,23 @@ vectormeta fix chunks.jsonl \
 
 `scan --stream` and `validate --stream` require JSONL input. `fix --stream` also requires `--format jsonl` output.
 
+## GitHub Action
+
+Run scan and validate checks in pull request CI:
+
+```yaml
+- uses: Achal13jain/vectormeta/actions/check-metadata@v0.5.0
+  with:
+    input: data/chunks.jsonl
+    target: pinecone
+    mode: both
+    stream: "true"
+    dim: "1536"
+    fail-on-warning: "true"
+```
+
+See [GitHub Action](github-action.md) for the full input reference.
+
 ## Hydrate
 
 ```bash

@@ -86,6 +86,7 @@ sidecar JSON file      -> large text, HTML, tables, summaries, payloads
 - Use `safe_upsert()` from Python to validate, fix, persist sidecars, and call an
   injected vector index client.
 - Store sidecar payloads in content-addressed local files or SQLite.
+- Run scan and validation checks in pull requests with the reusable GitHub Action.
 - Keep core logic independent from Typer and Rich so it can be tested and reused.
 
 ## Tech Stack
@@ -524,8 +525,36 @@ Expected result:
 - [Architecture overview](docs/architecture.md)
 - [Metadata reduction logic](docs/metadata-reduction.md)
 - [Usage guide](docs/usage.md)
+- [GitHub Action](docs/github-action.md)
 - [Testing checklist](docs/testing.md)
 - [Vector database notes](docs/vector-db-notes.md)
+
+## GitHub Action
+
+Run vectormeta in pull request CI:
+
+```yaml
+name: Vector metadata check
+
+on:
+  pull_request:
+
+jobs:
+  vectormeta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Achal13jain/vectormeta/actions/check-metadata@v0.5.0
+        with:
+          input: data/chunks.jsonl
+          target: pinecone
+          mode: both
+          stream: "true"
+          dim: "1536"
+          fail-on-warning: "true"
+```
+
+See [docs/github-action.md](docs/github-action.md) for all inputs.
 
 ## Limitations
 
@@ -550,7 +579,7 @@ Planned ideas include:
 - S3 sidecar backend
 - LangChain `Document` adapter
 - LlamaIndex `Node` adapter
-- GitHub Action for metadata checks
+- pre-commit hook for local metadata checks
 - HTML report output
 
 See [ROADMAP.md](ROADMAP.md).
