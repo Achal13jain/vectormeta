@@ -16,7 +16,7 @@
   <a href="https://pypi.org/project/vectormeta/"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/vectormeta"></a>
   <a href="https://github.com/Achal13jain/vectormeta/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Achal13jain/vectormeta/actions/workflows/ci.yml/badge.svg"></a>
   <a href="https://github.com/Achal13jain/vectormeta/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
-  <a href="https://achal13jain.github.io/vectormeta/"><img alt="Website" src="https://img.shields.io/badge/website-live-2ea44f"></a>
+  <a href="https://pepy.tech/projects/vectormeta"><img alt="PyPI Downloads" src="https://static.pepy.tech/personalized-badge/vectormeta?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads"></a>
 </p>
 
 <p align="center">
