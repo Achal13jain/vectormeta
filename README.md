@@ -544,7 +544,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Achal13jain/vectormeta/actions/check-metadata@v0.5.0
+      - uses: Achal13jain/vectormeta/actions/check-metadata@v0.5.1
         with:
           input: data/chunks.jsonl
           target: pinecone

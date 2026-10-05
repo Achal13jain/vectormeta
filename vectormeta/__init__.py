@@ -9,7 +9,7 @@ from vectormeta.stores import FileStore, SQLiteStore
 from vectormeta.upsert import safe_upsert
 from vectormeta.validator import validate_records
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 __all__ = [
     "FileStore",
