@@ -131,10 +131,19 @@ metadata on each record.
 
 ## Large File Policy
 
-JSON arrays and JSONL files are currently loaded into memory before scanning or fixing.
-This is acceptable for small and medium migration checks, but it is not the right shape
-for millions of embedding chunks. Streaming JSONL scan/fix is a planned follow-up so
-large pipelines can process records one at a time.
+JSON array inputs use the in-memory scan, validation, and fix paths. JSONL inputs can be
+processed one record at a time with `scan --stream`, `validate --stream`, or
+`fix --stream --format jsonl`.
+
+Streaming fixes write cleaned records to a temporary file in the output directory and
+replace the requested output only after every input record is processed successfully.
+If processing fails, a new partial output is removed and an existing output remains
+unchanged. Sidecar writes are incremental and are not rolled back after a later record
+fails, so callers may need to clean up unreferenced sidecars after an unsuccessful run.
+
+Streaming validation retains the IDs needed to detect duplicates and the configured
+number of problem records for reporting. It therefore avoids holding complete records
+in memory but does not guarantee constant memory usage for every input characteristic.
 
 ## Hydration Logic
 

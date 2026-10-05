@@ -117,6 +117,11 @@ vectormeta fix chunks.jsonl \
 
 `scan --stream` and `validate --stream` require JSONL input. `fix --stream` also requires `--format jsonl` output.
 
+Streaming fixes write to a temporary file beside the requested output and replace the
+destination only after all records are processed successfully. A failed run does not
+leave a partial output or replace an existing output. Sidecar writes are incremental
+and are not rolled back if a later record fails.
+
 ## GitHub Action
 
 Run scan and validate checks in pull request CI:

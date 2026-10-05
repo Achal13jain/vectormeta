@@ -17,6 +17,7 @@ from vectormeta.errors import InvalidInputError, VectorMetaError
 from vectormeta.fixer import DEFAULT_KEEP_FIELDS, fix_records, fix_records_iter, parse_field_list
 from vectormeta.hydrate import hydrate_records, hydrate_records_from_store
 from vectormeta.io import (
+    atomic_text_writer,
     detect_input_format,
     ensure_output_writable,
     iter_jsonl_records,
@@ -513,15 +514,13 @@ def _fix_streaming_jsonl(
         )
         return
 
-    ensure_output_writable(out, overwrite=overwrite)
-    out.parent.mkdir(parents=True, exist_ok=True)
     store = (
         None
         if sidecar_store == SidecarStoreOption.json
         else _sidecar_store(sidecar_store, sidecar_path)
     )
 
-    with out.open("w", encoding="utf-8") as output_file:
+    with atomic_text_writer(out, overwrite=overwrite) as output_file:
         for cleaned_record, sidecar, record_warnings, record_savings in fix_records_iter(
             iter_jsonl_records(input_path), options
         ):
