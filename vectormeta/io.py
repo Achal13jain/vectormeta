@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from collections.abc import Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TextIO
 
 from vectormeta.errors import InvalidInputError, OutputExistsError, SidecarConflictError
 from vectormeta.models import OutputFormat, Record, SidecarPayload
@@ -114,6 +117,33 @@ def write_jsonl_records(
         for record in records:
             file.write(json.dumps(record, ensure_ascii=False, separators=(",", ":")))
             file.write("\n")
+
+
+@contextmanager
+def atomic_text_writer(
+    path: Path,
+    *,
+    overwrite: bool = False,
+) -> Iterator[TextIO]:
+    """Yield a temporary text file and replace the destination after a successful write."""
+    ensure_output_writable(path, overwrite=overwrite)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as file:
+            yield file
+            file.flush()
+            os.fsync(file.fileno())
+        ensure_output_writable(path, overwrite=overwrite)
+        temporary_path.replace(path)
+    except BaseException:
+        temporary_path.unlink(missing_ok=True)
+        raise
 
 
 def ensure_output_writable(path: Path, *, overwrite: bool) -> None:

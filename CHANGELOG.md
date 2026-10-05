@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+- Streaming JSONL fixes now replace the requested output only after all records are
+  processed successfully, preventing partial output and preserving existing files when
+  a later record fails.
+
 ## 0.5.0 - 2026-09-14
 
 ### Added

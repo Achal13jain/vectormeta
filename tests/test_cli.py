@@ -348,6 +348,94 @@ def test_fix_streaming_jsonl_with_sqlite_store_deduplicates_payloads(tmp_path: P
     assert refs[0].startswith("sqlite:")
 
 
+def test_fix_streaming_removes_partial_output_after_late_input_error(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.jsonl"
+    ready_path = tmp_path / "ready.jsonl"
+    input_path.write_text(
+        '{"id":"valid","metadata":{"source":"paper.pdf"}}\n{"id":\n',
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "fix",
+            str(input_path),
+            "--stream",
+            "--format",
+            "jsonl",
+            "--out",
+            str(ready_path),
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert "Invalid JSONL" in result.output
+    assert not ready_path.exists()
+    assert list(tmp_path.glob(f".{ready_path.name}.*.tmp")) == []
+
+
+def test_fix_streaming_preserves_existing_output_after_late_input_error(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.jsonl"
+    ready_path = tmp_path / "ready.jsonl"
+    original_output = '{"id":"existing","metadata":{}}\n'
+    input_path.write_text(
+        '{"id":"valid","metadata":{"source":"paper.pdf"}}\n{"id":\n',
+        encoding="utf-8",
+    )
+    ready_path.write_text(original_output, encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "fix",
+            str(input_path),
+            "--stream",
+            "--format",
+            "jsonl",
+            "--out",
+            str(ready_path),
+            "--overwrite",
+        ],
+    )
+
+    assert result.exit_code == 2
+    assert ready_path.read_text(encoding="utf-8") == original_output
+    assert list(tmp_path.glob(f".{ready_path.name}.*.tmp")) == []
+
+
+def test_fix_streaming_replaces_existing_output_after_success(tmp_path: Path) -> None:
+    input_path = tmp_path / "records.jsonl"
+    ready_path = tmp_path / "ready.jsonl"
+    input_path.write_text(
+        '{"id":"updated","metadata":{"source":"paper.pdf"}}\n',
+        encoding="utf-8",
+    )
+    ready_path.write_text('{"id":"existing","metadata":{}}\n', encoding="utf-8")
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "fix",
+            str(input_path),
+            "--stream",
+            "--format",
+            "jsonl",
+            "--out",
+            str(ready_path),
+            "--overwrite",
+        ],
+    )
+
+    records = [json.loads(line) for line in ready_path.read_text(encoding="utf-8").splitlines()]
+    assert result.exit_code == 0
+    assert [record["id"] for record in records] == ["updated"]
+    assert list(tmp_path.glob(f".{ready_path.name}.*.tmp")) == []
+
+
 def test_fix_streaming_requires_jsonl_output(tmp_path: Path) -> None:
     input_path = tmp_path / "records.jsonl"
     ready_path = tmp_path / "ready.json"
