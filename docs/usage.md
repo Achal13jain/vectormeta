@@ -127,7 +127,7 @@ and are not rolled back if a later record fails.
 Run scan and validate checks in pull request CI:
 
 ```yaml
-- uses: Achal13jain/vectormeta/actions/check-metadata@v0.5.0
+- uses: Achal13jain/vectormeta/actions/check-metadata@v0.5.1
   with:
     input: data/chunks.jsonl
     target: pinecone
